@@ -1,10 +1,15 @@
 ## Suunnitelma
 Toteutetaan robotti, joka tutkii ja kartoittaa ympäristöään ja kartoittaa sitä.
 
+
 #### Toteutustapa
-Robotilla on kaksi moottoreihin kytkettyä rengasta ja jokin tasapainottava kolmas kosketuspinta -- pyörä, suksi tai jokin vastaava, riippuen osien saatavuudesta. Robotissa on myös ultraäänisensori, joka pyörii oman moottorinsa ohjaamana eri suuntiin. 
+Robotti rakennetaan Lego Mindstorms NXT 1.0-sarjasta, ja sitä kontrolloiva ohjelma toteutetaan Javalla niin, että robotin ohjausyksikköön on asennettu leJOS-firmware. Ainakin aluksi käytetään virtuaalikoneella suoritettavassa RojbOS-käyttöjärjestelmässä Eclipse-kehitysympäristöä.
 
 #### Perusominaisuudet
+Robotilla on kaksi moottoreihin kytkettyä rengasta ja jokin tasapainottava kolmas kosketuspinta -- pyörä, suksi tai jokin vastaava, riippuen osien saatavuudesta. Robotissa on myös ultraäänisensori, joka pyörii oman moottorinsa ohjaamana eri suuntiin.  
+  
+Robotin toiminta:  
+  
 * Robotti asetetaan halutuun alkupisteeseen, jonka jälkeen ohjelma käynnistetään
 * Robotti kalibroi sensorin, moottorien senhetkiset tilat ja alkaa kartoittaa tilaa tietynkokoisiin sektoreihin jaettuna
 *  Joka sektoriin saapuessaan robotti pysähtyy hetkeksi katsomaan sivuilleen jonka jälkeen se jatkaa siihen suuntaan missä se ei ole vielä ollut tai mihin se voi vielä mennä 
