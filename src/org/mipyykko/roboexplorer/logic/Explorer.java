@@ -17,5 +17,6 @@ public class Explorer {
 		while (menu.startMenu() >= 0) {
 			// nawt
 		}
+		Robot robot = new Robot(this.config);
 	}
 }
