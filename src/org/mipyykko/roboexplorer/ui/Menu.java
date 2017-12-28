@@ -1,8 +1,9 @@
 package org.mipyykko.roboexplorer.ui;
-import org.mipyykko.roboexplorer.config.Config;
-
 import lejos.nxt.Button;
 import lejos.util.TextMenu;
+
+import org.mipyykko.roboexplorer.config.Config;
+import org.mipyykko.roboexplorer.util.RoboException;
 
 public class Menu {
 
@@ -12,7 +13,7 @@ public class Menu {
 		this.config = config;
 	}
 	
-	public static int startMenu() {
+	public int startMenu() {
 		while (!Button.ESCAPE.isPressed()) {
 			TextMenu startMenu = new TextMenu(new String[]{"Start", "Config"}, 1, "Robo Explorer");
 			int menuChoice = startMenu.select();
@@ -30,6 +31,8 @@ public class Menu {
 	}
 	
 	public static void configMenu() {
-		
+		// debug 
+		Screen.showText("this is a rather long error message with spam and asdfsdfsdfdfdfdfdfdf", 0, 0);
+		while (!Button.ESCAPE.isPressed()) { Thread.yield(); }	
 	}
 }
