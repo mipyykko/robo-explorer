@@ -33,7 +33,7 @@ public class Text {
 					lines++;
 				} else {
 					stack.push(data.substring(cursor, cursor + lineCursor));
-					cursor += lineCursor;
+					cursor += lineCursor + 1;
 					lineCursor = 0;
 					lines++;
 				}
@@ -41,10 +41,16 @@ public class Text {
 				lineCursor++;
 			}
 		}
-		String[] array = new String[lines];
-		for (int i = lines; i >= 0; i--) {
-			array[i] = stack.pop();
+		if (lineCursor > 0) {
+			stack.push(data.substring(cursor, cursor + lineCursor));
 		}
-		return array;
+		if (!stack.isEmpty()) {
+			String[] array = new String[lines];
+			for (int i = lines - 1; i >= 0; i--) {
+				array[i] = stack.pop();
+			}
+			return array;
+		}
+		return new String[0];
 	}
 }

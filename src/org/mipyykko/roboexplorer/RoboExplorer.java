@@ -12,6 +12,6 @@ public class RoboExplorer {
 
 	public static void main(String[] args) {
 		Explorer e = new Explorer();
-		e.run();
+		e.start();
 	}
 }
