@@ -56,7 +56,7 @@ public class Explorer {
 	
 	private void run() {
 		int ultrasonicMotorStart = ultrasonicMotor.getTachoCount();
-		DifferentialPilot dp = new DifferentialPilot(2.1f, 4.4f, leftMotor, rightMotor, false);
+		DifferentialPilot dp = new DifferentialPilot(config.getWheelDiameter(), config.getTrackWidth(), leftMotor, rightMotor, false);
 		dp.setTravelSpeed(5);
 		
 		while (!Button.ESCAPE.isPressed()) {
@@ -95,15 +95,9 @@ public class Explorer {
 				// ....
 			}
 			
-			if (forward > 10 && forward < 255) {
+			if (forward > 10 && forward < 255 && map.getValueFromHeading(x, y, heading) > 10) {
 				dp.travel(5);
-//				leftMotor.setSpeed(60);
-//				rightMotor.setSpeed(60);
-//				leftMotor.rotateTo(movement * 360, true);
-//				rightMotor.rotateTo(movement * 360, true);
-//				while (leftMotor.isMoving() && rightMotor.isMoving()) {
-//					Thread.yield();
-//				}
+
 				switch (heading) {
 					case 0: 
 						y++;
@@ -120,46 +114,89 @@ public class Explorer {
 					default:
 						// what?
 				}
-			} else if (x < xsize && right > 10 && right < 255) {
+			} 
+			// TODO: relativeLeft & relativeRight here, now it goes off the map in some cases
+			else if (x < xsize && right > 10 && right < 255 && map.getValueFromHeading(x, y, heading + 90) > 10) {
 				changeHeading(90);
-				dp.rotate(90);
-//				leftMotor.setSpeed(60);
-//				leftMotor.rotateTo(90);
+				dp.rotate(-90); // positive = left
 				// turn right
-			} else if (x > 0 && left > 10 && left < 255) {
+			} else if (x > 0 && left > 10 && left < 255 && map.getValueFromHeading(x, y, heading - 90) > 10) {
 				changeHeading(-90);
-				dp.rotate(-90);
-//				rightMotor.setSpeed(60);
-//				rightMotor.rotateTo(90);
+				dp.rotate(90);
 				// turn left
 			} else {
 				changeHeading(180);
 				dp.rotate(-180);
-//				rightMotor.setSpeed(60);
-//				rightMotor.rotateTo(180);
 				// turn back
 			}
 		}
 	}
+
+	// TODO: horrible!
+	class Pair {
+		int x, y;
+		
+		Pair(int x, int y) {
+			this.x = x;
+			this.y = y;
+		}
+	}
 	
 	private void setData(double left, double right, double forward) throws Exception {
-		if (x > 0) {
-			map.setValue(x - 1, y, (int) left);
+		
+		Pair relativeLeft, relativeRight, relativeForward;
+		int relativeX = x;
+		int relativeY = y;
+		int relativeXsize = xsize;
+		int relativeYsize = ysize;
+		
+		switch (heading) {
+			case 0:
+			default:
+				relativeLeft = new Pair(-1, 0);
+				relativeRight = new Pair(1, 0);
+				relativeForward = new Pair(0, 1);
+				break;
+			case 90:
+				relativeLeft = new Pair(0, 1);
+				relativeRight = new Pair(0, -1);
+				relativeForward = new Pair(1, 0);
+				relativeX = y;
+				relativeY = x;
+				relativeXsize = ysize;
+				relativeYsize = xsize;
+				break;
+			case 180:
+				relativeLeft = new Pair(1, 0);
+				relativeRight = new Pair(-1, 0);
+				relativeForward = new Pair(0, -1);
+				break;
+			case 270:
+				relativeLeft = new Pair(0, -1);
+				relativeRight = new Pair(0, 1);
+				relativeForward = new Pair(-1, 0);
+				relativeX = y;
+				relativeY = x;
+				relativeXsize = ysize;
+				relativeYsize = xsize;
+				break;
 		}
-		if (x < xsize) {
-			map.setValue(x + 1, y, (int) right);
+		if (relativeX > 0 && relativeX < relativeXsize && map.getValue(x + relativeLeft.x, y + relativeLeft.y) < left) {
+			map.setValue(x + relativeLeft.x, y + relativeLeft.y, (int) left);
 		}
-		if (y < ysize) {
-			map.setValue(x, y+1, (int) forward);
+		if (relativeX < relativeXsize && relativeX > 0 && map.getValue(x + relativeRight.x, y + relativeRight.y) < right) {
+			map.setValue(x + relativeRight.x, y + relativeRight.y, (int) right);
+		}
+		if (relativeY < relativeYsize && relativeY > 0 && map.getValue(x + relativeForward.x, y + relativeForward.y) < forward) {
+			map.setValue(x + relativeForward.x, y + relativeForward.y, (int) forward);
 		}
 	}
 	
 	private void changeHeading(int h) {
 		heading += h;
 		if (heading < 0) { 
-			heading = 360 - heading;
-		}
-		if (heading > 360) {
+			heading = 360 + heading;
+		} else if (heading >= 360) {
 			heading = heading - 360;
 		}
 	}
