@@ -12,6 +12,12 @@ import org.mipyykko.roboexplorer.util.Convert;
 import lejos.nxt.MotorPort;
 import lejos.nxt.SensorPort;
 
+/**
+ * Robotin asetukset ja niihin liittyvät levyoperaatiot.
+ * 
+ * @author mipyykko
+ *
+ */
 public class Config {
 
 	final MotorPort LEFT_MOTOR_DEFAULT_PORT = MotorPort.B;

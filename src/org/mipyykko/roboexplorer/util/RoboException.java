@@ -5,7 +5,6 @@ import lejos.nxt.LCD;
 import org.mipyykko.roboexplorer.config.ErrorCode;
 import org.mipyykko.roboexplorer.ui.Screen;
 
-
 public class RoboException extends Exception {
 
 	private String message;
@@ -15,7 +14,6 @@ public class RoboException extends Exception {
 		super(message);
 	}
 
-	// somehow exception constructor with cause isn't there?!
 	public RoboException(String message, /* Throwable cause, */ErrorCode code) {
 		super(message/*, cause*/);
 		this.message = message;

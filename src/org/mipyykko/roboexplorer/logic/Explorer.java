@@ -10,6 +10,12 @@ import org.mipyykko.roboexplorer.config.Config;
 import org.mipyykko.roboexplorer.model.Map;
 import org.mipyykko.roboexplorer.ui.Menu;
 
+/**
+ * Pääluokka.
+ * 
+ * @author mipyykko
+ *
+ */
 public class Explorer {
 
 	private Config config;
@@ -39,6 +45,9 @@ public class Explorer {
 		this.heading = 0;
 	}
 	
+	/**
+	 * Näyttää valikon, alustaa ja käynnistää robotin
+	 */
 	public void start() {
 		while (menu.startMenu() > 0) {
 			// nawt
