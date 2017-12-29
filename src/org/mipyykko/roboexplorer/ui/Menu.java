@@ -5,6 +5,12 @@ import lejos.util.TextMenu;
 import org.mipyykko.roboexplorer.config.Config;
 import org.mipyykko.roboexplorer.util.RoboException;
 
+/**
+ * Valikko ja siihen liittyvät toiminnot.
+ * 
+ * @author mipyykko
+ *
+ */
 public class Menu {
 
 	private Config config;
@@ -13,6 +19,11 @@ public class Menu {
 		this.config = config;
 	}
 	
+	/**
+	 * Alkuvalikko.
+	 * 
+	 * @return 0 jos on valittu Start, muuten -1
+	 */
 	public int startMenu() {
 		while (!Button.ESCAPE.isPressed()) {
 			TextMenu startMenu = new TextMenu(new String[]{"Start", "Config"}, 1, "Robo Explorer");

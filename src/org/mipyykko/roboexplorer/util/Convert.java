@@ -3,6 +3,12 @@ package org.mipyykko.roboexplorer.util;
 import lejos.nxt.MotorPort;
 import lejos.nxt.SensorPort;
 
+/**
+ * Apuluokka asetuksia varten.
+ * 
+ * @author mipyykko
+ *
+ */
 public class Convert {
 	
 	public MotorPort motor(String port) throws Exception {

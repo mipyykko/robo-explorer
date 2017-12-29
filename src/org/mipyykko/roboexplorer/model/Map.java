@@ -1,5 +1,12 @@
 package org.mipyykko.roboexplorer.model;
 
+/**
+ * 
+ * Kartta ja siihen liittyvät metodit.
+ * 
+ * @author mipyykko
+ *
+ */
 public class Map {
 
 	private int height, width;
@@ -51,6 +58,15 @@ public class Map {
 		return data[y][x];
 	}
 	
+	/**
+	 * Palauttaa suoraan edessä olevan karttaruudun arvon robotin suunnan perusteella.
+	 * TODO: paljonkin.
+	 * 
+	 * @param x 
+	 * @param y 
+	 * @param heading Robotin suunta: 0 = ylös, 90 = oikea, 180 = alas, 270 = vasen
+	 * @return haluttu arvo tai 255 jos ei voida palauttaa mitään
+	 */
 	public int getValueFromHeading(int x, int y, int heading)/* throws Exception */{
 		if (heading < 0) { 
 			heading = 360 + heading;

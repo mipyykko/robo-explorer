@@ -2,6 +2,12 @@ package org.mipyykko.roboexplorer.util;
 
 import java.util.Stack;
 
+/**
+ * Apuluokka tekstitoimintoja varten.
+ * 
+ * @author mipyykko
+ *
+ */
 public class Text {
 
 	private String data;
@@ -10,6 +16,13 @@ public class Text {
 		this.data = data;
 	}
 	
+	/**
+	 * Rivittää annetun tekstin välilyöntien tai viivojen mukaan; jos sana on yli annetun pituuden,
+	 * katkaistaan se keskeltä.
+	 * 
+	 * @param length
+	 * @return Tekstirivit sisältävä String-taulukko 
+	 */
 	public String[] flowTextLines(int length) {
 		length = length > 17 ? 17 : length;
 		
