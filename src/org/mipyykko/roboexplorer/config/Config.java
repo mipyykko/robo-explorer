@@ -14,14 +14,19 @@ import lejos.nxt.SensorPort;
 
 public class Config {
 
-	final MotorPort LEFT_MOTOR_DEFAULT_PORT = MotorPort.A;
-	final MotorPort RIGHT_MOTOR_DEFAULT_PORT = MotorPort.B;
+	final MotorPort LEFT_MOTOR_DEFAULT_PORT = MotorPort.B;
+	final MotorPort RIGHT_MOTOR_DEFAULT_PORT = MotorPort.A;
 	final MotorPort ULTRASONIC_MOTOR_DEFAULT_PORT = MotorPort.C;
 	
-	final SensorPort ULTRASONIC_SENSOR_DEFAULT_PORT = SensorPort.S1;
+	final SensorPort ULTRASONIC_SENSOR_DEFAULT_PORT = SensorPort.S2;
+	
+	final double WHEEL_DEFAULT_DIAMETER = 2.24f;
+	final double TRACK_DEFAULT_WIDTH = 4.8f;
 	
 	private MotorPort leftMotorPort, rightMotorPort, ultrasonicMotorPort;
 	private SensorPort ultrasonicSensorPort;
+	
+	private double wheelDiameter, trackWidth;
 	
 	private Properties config;
 	private Convert convert = new Convert();
@@ -38,6 +43,8 @@ public class Config {
 		this.rightMotorPort = RIGHT_MOTOR_DEFAULT_PORT;
 		this.ultrasonicMotorPort = ULTRASONIC_MOTOR_DEFAULT_PORT;
 		this.ultrasonicSensorPort = ULTRASONIC_SENSOR_DEFAULT_PORT;
+		this.wheelDiameter = WHEEL_DEFAULT_DIAMETER;
+		this.trackWidth = TRACK_DEFAULT_WIDTH;
 	}
 
 	private void readConfig() {
@@ -46,6 +53,8 @@ public class Config {
 			this.rightMotorPort = convert.motor(config.getProperty("rightMotorPort"));
 			this.ultrasonicMotorPort = convert.motor(config.getProperty("ultrasonicMotorPort"));
 			this.ultrasonicSensorPort = convert.sensor(config.getProperty("ultrasonicSensorPort"));
+			this.wheelDiameter = Double.parseDouble(config.getProperty("wheelDiameter"));
+			this.trackWidth = Double.parseDouble(config.getProperty("trackWidth"));
 		} catch (Exception e) {
 			// something
 		}
@@ -57,6 +66,8 @@ public class Config {
 			config.setProperty("rightMotorPort", convert.motor(this.rightMotorPort));
 			config.setProperty("ultrasonicMotorPort", convert.motor(this.ultrasonicMotorPort));
 			config.setProperty("ultrasonicSensorPort", convert.sensor(this.ultrasonicSensorPort));
+			config.setProperty("wheelDiameter", Double.toString(this.wheelDiameter));
+			config.setProperty("trackWidth", Double.toString(this.trackWidth));
 		} catch (Exception e) {
 			// something
 		}
@@ -121,6 +132,24 @@ public class Config {
 	public void setUltrasonicSensorPort(SensorPort ultrasonicSensorPort) {
 		this.ultrasonicSensorPort = ultrasonicSensorPort;
 		config.setProperty("ultrasonicSensorPort", convert.sensor(ultrasonicSensorPort));
+	}
+
+	public double getWheelDiameter() {
+		return wheelDiameter;
+	}
+
+	public void setWheelDiameter(double wheelDiameter) {
+		this.wheelDiameter = wheelDiameter;
+		config.setProperty("wheelDiameter", Double.toString(wheelDiameter));
+	}
+
+	public double getTrackWidth() {
+		return trackWidth;
+	}
+
+	public void setTrackWidth(double trackWidth) {
+		this.trackWidth = trackWidth;
+		config.setProperty("trackWidth", Double.toString(trackWidth));
 	}
 	
 	
