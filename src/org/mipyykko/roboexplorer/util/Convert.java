@@ -11,10 +11,10 @@ import lejos.nxt.SensorPort;
  */
 public class Convert {
 	
-	public MotorPort motor(String port) throws Exception {
-		if (port.isEmpty()) {
-			throw new Exception("no motorport in config");
-		}
+	public MotorPort motor(String port) {
+//		if (port.isEmpty()) {
+//			throw new Exception("no motorport in config");
+//		}
 		
 		switch (port.charAt(0)) {
 			case 'A':
@@ -24,7 +24,8 @@ public class Convert {
 			case 'C':
 				return MotorPort.C;
 			default:
-				throw new Exception("invalid motorport config");
+				return null;
+//				throw new Exception("invalid motorport config");
 		}
 	}
 	
@@ -32,10 +33,10 @@ public class Convert {
 		return motorPort.toString();
 	}
 	
-	public SensorPort sensor(String port) throws Exception {
-		if (port.isEmpty()) {
-			throw new Exception("no sensorport in config");
-		}
+	public SensorPort sensor(String port) {
+//		if (port.isEmpty()) {
+//			throw new Exception("no sensorport in config");
+//		}
 		
 		switch (port.charAt(1)) {
 			case '1':
@@ -47,7 +48,8 @@ public class Convert {
 			case '4':
 				return SensorPort.S4;
 			default:
-				throw new Exception("invalid sensorport config");
+				return null;
+//				throw new Exception("invalid sensorport config");
 		}
 	}
 	
