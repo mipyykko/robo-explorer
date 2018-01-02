@@ -4,10 +4,15 @@ import lejos.nxt.Button;
 import lejos.nxt.LCD;
 import lejos.nxt.NXTRegulatedMotor;
 import lejos.nxt.UltrasonicSensor;
+import lejos.robotics.RangeReadings;
+import lejos.robotics.RangeScanner;
+import lejos.robotics.RotatingRangeScanner;
+import lejos.robotics.localization.OdometryPoseProvider;
 import lejos.robotics.navigation.DifferentialPilot;
+import lejos.robotics.navigation.Pose;
 
 import org.mipyykko.roboexplorer.config.Config;
-import org.mipyykko.roboexplorer.model.Map;
+import org.mipyykko.roboexplorer.model.RoboMap;
 import org.mipyykko.roboexplorer.ui.Menu;
 
 /**
@@ -20,7 +25,7 @@ public class Explorer {
 
 	private Config config;
 	private Menu menu;
-	private Map map;
+	private RoboMap map;
 	
 	private NXTRegulatedMotor leftMotor, rightMotor, ultrasonicMotor;
 	private UltrasonicSensor ultrasonicSensor;
@@ -34,7 +39,7 @@ public class Explorer {
 		this.config = new Config();
 		this.menu = new Menu(this.config);
 		try {
-			this.map = new Map(xsize, ysize);
+			this.map = new RoboMap(xsize, ysize);
 		} catch (Exception e) {
 			e.printStackTrace();
 			System.exit(1);
@@ -57,28 +62,28 @@ public class Explorer {
 	}
 	
 	private void init() {
-		this.leftMotor = new NXTRegulatedMotor(config.getLeftMotorPort());
-		this.rightMotor = new NXTRegulatedMotor(config.getRightMotorPort());
-		this.ultrasonicMotor = new NXTRegulatedMotor(config.getUltrasonicMotorPort());
-		this.ultrasonicSensor = new UltrasonicSensor(config.getUltrasonicSensorPort());
+		this.leftMotor = new NXTRegulatedMotor(config.getMotorPort("leftMotorPort"));
+		this.rightMotor = new NXTRegulatedMotor(config.getMotorPort("rightMotorPort"));
+		this.ultrasonicMotor = new NXTRegulatedMotor(config.getMotorPort("ultrasonicMotorPort"));
+		this.ultrasonicSensor = new UltrasonicSensor(config.getSensorPort("ultrasonicSensorPort"));
 	}
 	
 	private void run() {
-		int ultrasonicMotorStart = ultrasonicMotor.getTachoCount();
-		DifferentialPilot dp = new DifferentialPilot(config.getWheelDiameter(), config.getTrackWidth(), leftMotor, rightMotor, false);
-		dp.setTravelSpeed(5);
+		DifferentialPilot pilot = new DifferentialPilot(config.getDouble("wheelDiameter"), config.getDouble("trackWidth"), leftMotor, rightMotor, false);
+		OdometryPoseProvider poseProvider = new OdometryPoseProvider(pilot);
+		Pose pose = new Pose(0, 0, 0);
+		poseProvider.setPose(pose);
+		pilot.setTravelSpeed(5);
+		pilot.setRotateSpeed(25);
+		RangeScanner scanner = new RotatingRangeScanner(ultrasonicMotor, ultrasonicSensor);
+		scanner.setAngles(new float[]{90, 0, -90});
 		
 		while (!Button.ESCAPE.isPressed()) {
-			ultrasonicMotor.rotate(-90);
-			ultrasonicMotor.waitComplete();
-			double left = ultrasonicSensor.getRange();
-			ultrasonicMotor.rotate(90);
-			ultrasonicMotor.waitComplete();
-			double forward = ultrasonicSensor.getRange();
-			ultrasonicMotor.rotate(90);
-			ultrasonicMotor.waitComplete();
-			double right = ultrasonicSensor.getRange();
-			ultrasonicMotor.rotate(-90);
+			RangeReadings readings = scanner.getRangeValues();
+
+			double left = readings.getRange(0);
+			double forward = readings.getRange(1);
+			double right = readings.getRange(2);
 
 			LCD.clear();
 			LCD.drawString("forward: ", 0, 0);
@@ -86,12 +91,17 @@ public class Explorer {
 			LCD.drawString("right: ", 0, 2);
 			LCD.drawString("x, y: ", 0, 3);
 			LCD.drawString("heading: ", 0, 4);
+			LCD.drawString("poseX: ", 0, 5);
+			LCD.drawString("poseY: ", 0, 6);
 			LCD.drawInt((int) forward, 10, 0);
 			LCD.drawInt((int) left, 10, 1);
 			LCD.drawInt((int) right, 10, 2);
 			LCD.drawString(x + " " + y, 10, 3);
-			LCD.drawInt(heading, 10, 4);
+			LCD.drawString(Double.toString(poseProvider.getPose().getHeading()), 10, 4);
+			LCD.drawString(poseProvider.getPose().getX() + "", 7, 5);
+			LCD.drawString(poseProvider.getPose().getY() + "", 7, 6);
 			
+			heading = (int) poseProvider.getPose().getHeading();
 			try {
 				Thread.sleep(1000);
 			} catch (Exception e) {
@@ -105,7 +115,7 @@ public class Explorer {
 			}
 			
 			if (forward > 10 && forward < 255 && map.getValueFromHeading(x, y, heading) > 10) {
-				dp.travel(5);
+				pilot.travel(5);
 
 				switch (heading) {
 					case 0: 
@@ -126,16 +136,16 @@ public class Explorer {
 			} 
 			// TODO: relativeLeft & relativeRight here, now it goes off the map in some cases
 			else if (x < xsize && right > 10 && right < 255 && map.getValueFromHeading(x, y, heading + 90) > 10) {
-				changeHeading(90);
-				dp.rotate(-90); // positive = left
+//				changeHeading(90);
+				pilot.rotate(-90); // positive = left
 				// turn right
 			} else if (x > 0 && left > 10 && left < 255 && map.getValueFromHeading(x, y, heading - 90) > 10) {
-				changeHeading(-90);
-				dp.rotate(90);
+//				changeHeading(-90);
+				pilot.rotate(90);
 				// turn left
 			} else {
-				changeHeading(180);
-				dp.rotate(-180);
+//				changeHeading(180);
+				pilot.rotate(-180);
 				// turn back
 			}
 		}

@@ -5,12 +5,16 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.Enumeration;
+import java.util.Hashtable;
 import java.util.Properties;
 
-import org.mipyykko.roboexplorer.util.Convert;
-
+import lejos.nxt.Button;
+import lejos.nxt.LCD;
 import lejos.nxt.MotorPort;
 import lejos.nxt.SensorPort;
+
+import org.mipyykko.roboexplorer.util.Convert;
 
 /**
  * Robotin asetukset ja niihin liittyvät levyoperaatiot.
@@ -20,62 +24,41 @@ import lejos.nxt.SensorPort;
  */
 public class Config {
 
-	final MotorPort LEFT_MOTOR_DEFAULT_PORT = MotorPort.B;
-	final MotorPort RIGHT_MOTOR_DEFAULT_PORT = MotorPort.A;
-	final MotorPort ULTRASONIC_MOTOR_DEFAULT_PORT = MotorPort.C;
+	final String LEFT_MOTOR_DEFAULT_PORT = "B";
+	final String RIGHT_MOTOR_DEFAULT_PORT = "A";
+
+	final String ULTRASONIC_MOTOR_DEFAULT_PORT = "C";
+	final String ULTRASONIC_SENSOR_DEFAULT_PORT = "S2";
 	
-	final SensorPort ULTRASONIC_SENSOR_DEFAULT_PORT = SensorPort.S2;
+	final String WHEEL_DEFAULT_DIAMETER = "2.24";
+	final String TRACK_DEFAULT_WIDTH = "4.8";
 	
-	final double WHEEL_DEFAULT_DIAMETER = 2.24f;
-	final double TRACK_DEFAULT_WIDTH = 4.8f;
-	
-	private MotorPort leftMotorPort, rightMotorPort, ultrasonicMotorPort;
-	private SensorPort ultrasonicSensorPort;
-	
-	private double wheelDiameter, trackWidth;
+	final Hashtable<String, String> defaultValues = new Hashtable<String, String>() {
+		{
+			put("leftMotorPort", LEFT_MOTOR_DEFAULT_PORT);
+			put("rightMotorPort", RIGHT_MOTOR_DEFAULT_PORT);
+			put("ultrasonicMotorPort", ULTRASONIC_MOTOR_DEFAULT_PORT);
+			put("ultrasonicSensorPort", ULTRASONIC_SENSOR_DEFAULT_PORT);
+			put("wheelDiameter", WHEEL_DEFAULT_DIAMETER);
+			put("trackWidth", TRACK_DEFAULT_WIDTH);
+			
+		}
+	};
 	
 	private Properties config;
 	private Convert convert = new Convert();
 	
 	public Config() {
-		Properties config = new Properties();
+		this.config = new Properties();
 		setDefaultConfig();
 		loadConfig();
-		readConfig();
 	}
 	
 	private void setDefaultConfig() {
-		this.leftMotorPort = LEFT_MOTOR_DEFAULT_PORT;
-		this.rightMotorPort = RIGHT_MOTOR_DEFAULT_PORT;
-		this.ultrasonicMotorPort = ULTRASONIC_MOTOR_DEFAULT_PORT;
-		this.ultrasonicSensorPort = ULTRASONIC_SENSOR_DEFAULT_PORT;
-		this.wheelDiameter = WHEEL_DEFAULT_DIAMETER;
-		this.trackWidth = TRACK_DEFAULT_WIDTH;
-	}
-
-	private void readConfig() {
-		try {
-			this.leftMotorPort = convert.motor(config.getProperty("leftMotorPort"));
-			this.rightMotorPort = convert.motor(config.getProperty("rightMotorPort"));
-			this.ultrasonicMotorPort = convert.motor(config.getProperty("ultrasonicMotorPort"));
-			this.ultrasonicSensorPort = convert.sensor(config.getProperty("ultrasonicSensorPort"));
-			this.wheelDiameter = Double.parseDouble(config.getProperty("wheelDiameter"));
-			this.trackWidth = Double.parseDouble(config.getProperty("trackWidth"));
-		} catch (Exception e) {
-			// something
-		}
-	}
-	
-	private void writeConfig() {
-		try {
-			config.setProperty("leftMotorPort", convert.motor(this.leftMotorPort));
-			config.setProperty("rightMotorPort", convert.motor(this.rightMotorPort));
-			config.setProperty("ultrasonicMotorPort", convert.motor(this.ultrasonicMotorPort));
-			config.setProperty("ultrasonicSensorPort", convert.sensor(this.ultrasonicSensorPort));
-			config.setProperty("wheelDiameter", Double.toString(this.wheelDiameter));
-			config.setProperty("trackWidth", Double.toString(this.trackWidth));
-		} catch (Exception e) {
-			// something
+		Enumeration<String> vals = defaultValues.keys();
+		while (vals.hasMoreElements()) {
+			String key = vals.nextElement();
+			config.setProperty(key, defaultValues.get(key));
 		}
 	}
 	
@@ -104,59 +87,30 @@ public class Config {
 		}
 	}
 
-	public MotorPort getLeftMotorPort() {
-		return leftMotorPort;
-	}
-
-	public void setLeftMotorPort(MotorPort leftMotorPort) {
-		this.leftMotorPort = leftMotorPort;
-		config.setProperty("leftMotorPort", convert.motor(leftMotorPort));
-	}
-
-	public MotorPort getRightMotorPort() {
-		return rightMotorPort;
-	}
-
-	public void setRightMotorPort(MotorPort rightMotorPort) {
-		this.rightMotorPort = rightMotorPort;
-		config.setProperty("rightMotorPort", convert.motor(rightMotorPort));
-	}
-
-	public MotorPort getUltrasonicMotorPort() {
-		return ultrasonicMotorPort;
-	}
-
-	public void setUltrasonicMotorPort(MotorPort ultrasonicMotorPort) {
-		this.ultrasonicMotorPort = ultrasonicMotorPort;
-		config.setProperty("ultrasonicMotorPort", convert.motor(ultrasonicMotorPort));
-	}
-
-	public SensorPort getUltrasonicSensorPort() {
-		return ultrasonicSensorPort;
-	}
-
-	public void setUltrasonicSensorPort(SensorPort ultrasonicSensorPort) {
-		this.ultrasonicSensorPort = ultrasonicSensorPort;
-		config.setProperty("ultrasonicSensorPort", convert.sensor(ultrasonicSensorPort));
-	}
-
-	public double getWheelDiameter() {
-		return wheelDiameter;
-	}
-
-	public void setWheelDiameter(double wheelDiameter) {
-		this.wheelDiameter = wheelDiameter;
-		config.setProperty("wheelDiameter", Double.toString(wheelDiameter));
-	}
-
-	public double getTrackWidth() {
-		return trackWidth;
-	}
-
-	public void setTrackWidth(double trackWidth) {
-		this.trackWidth = trackWidth;
-		config.setProperty("trackWidth", Double.toString(trackWidth));
+	public String get(String key) {
+		return config.getProperty(key);
 	}
 	
+	public double getDouble(String key) {
+		return Double.parseDouble(config.getProperty(key));
+	}
 	
+	public MotorPort getMotorPort(String key) {
+		return convert.motor(config.getProperty(key));
+	}
+	
+	public SensorPort getSensorPort(String key) {
+		return convert.sensor(config.getProperty(key));
+	}
+
+	public boolean set(String key, String value) {
+		config.setProperty(key, value);
+		return true;
+	}
+	
+	public boolean setDouble(String key, Double value) {
+		config.setProperty(key, Double.toString(value));
+		return true;
+	}
+		
 }
