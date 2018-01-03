@@ -33,6 +33,11 @@ public class Config {
 	final String WHEEL_DEFAULT_DIAMETER = "2.24";
 	final String TRACK_DEFAULT_WIDTH = "4.8";
 	
+	final String TRAVEL_DEFAULT_SPEED = "5";
+	final String ROTATE_DEFAULT_SPEED = "25";
+	final String TRAVEL_DEFAULT_DISTANCE = "5";
+	final String DISTANCE_DEFAULT_THRESHOLD = "25";
+	
 	final Hashtable<String, String> defaultValues = new Hashtable<String, String>() {
 		{
 			put("leftMotorPort", LEFT_MOTOR_DEFAULT_PORT);
@@ -41,6 +46,11 @@ public class Config {
 			put("ultrasonicSensorPort", ULTRASONIC_SENSOR_DEFAULT_PORT);
 			put("wheelDiameter", WHEEL_DEFAULT_DIAMETER);
 			put("trackWidth", TRACK_DEFAULT_WIDTH);
+			put("travelSpeed", TRAVEL_DEFAULT_SPEED);
+			put("rotateSpeed", ROTATE_DEFAULT_SPEED);
+			put("travelDistance", TRAVEL_DEFAULT_DISTANCE);
+			put("distanceThreshold", DISTANCE_DEFAULT_THRESHOLD);
+			put("debug", "true");
 			
 		}
 	};
