@@ -10,14 +10,16 @@ package org.mipyykko.roboexplorer.model;
 public class RoboMap {
 
 	private int height, width;
-	private int[][] data;
+	private int[][] mapData;
+	private int[][] countData;
 	
 	public RoboMap(int height, int width) throws Exception {
 		// the robot coordinates are the "right way" on the y-axis eg. y increases upwards
 		if (height < 0 || width < 0) {
 			throw new Exception("out of bounds");
 		}
-		this.data = new int[height][width];
+		this.mapData = new int[height][width];
+		this.countData = new int[height][width];
 	}
 
 	public int getHeight() {
@@ -36,66 +38,60 @@ public class RoboMap {
 		this.width = width;
 	}
 
-	public int[][] getData() {
-		return data;
+	public int[][] getMapData() {
+		return mapData;
 	}
 
-	public void setData(int[][] data) {
-		this.data = data;
+	public void setMapData(int[][] data) {
+		this.mapData = data;
 	}
 	
-	public void setValue(int x, int y, int value) /*throws Exception*/ {
+	public void incCount(int x, int y) {
+		countData[y][x]++;
+	}
+	
+	public void incMap(int x, int y) {
+		mapData[y][x]++;
+	}
+	
+	public void decMap(int x, int y) {
+		mapData[y][x]--;
+	}
+	
+	public void setMapValue(int x, int y, int value) /*throws Exception*/ {
 		if (x < 0 || y < 0 || x > this.width|| y > this.height) {
 			//throw new Exception("out of bounds!");
 		}
-		data[y][x] = value;
+		mapData[y][x] = value;
 	}
 	
-	public int getValue(int x, int y) /*throws Exception*/ {
+	public int getMapValue(int x, int y) /*throws Exception*/ {
 		if (x < 0 || y < 0 || x > this.width|| y > this.height) {
 			//throw new Exception("out of bounds!");
 		}
-		return data[y][x];
+		return mapData[y][x];
 	}
 	
-	/**
-	 * Palauttaa suoraan edessä olevan karttaruudun arvon robotin suunnan perusteella.
-	 * TODO: paljonkin.
-	 * 
-	 * @param x 
-	 * @param y 
-	 * @param heading Robotin suunta: 0 = ylös, 90 = oikea, 180 = alas, 270 = vasen
-	 * @return haluttu arvo tai 255 jos ei voida palauttaa mitään
-	 */
-	public int getValueFromHeading(int x, int y, int heading)/* throws Exception */{
-		if (heading < 0) { 
-			heading = 360 + heading;
-		} else if (heading >= 360) {
-			heading = heading - 360;
+	public int getCountValue(int x, int y) {
+		return countData[y][x];
+	}
+	
+	public boolean occupied(int x, int y) {
+		if (countData[y][x] == 0) {
+			return false; 
 		}
-		switch (heading) {
-			case 0:
-				if (y > 0) {
-					return getValue(x, y - 1);
-				} 
-				return 255;
-			case 90:
-				if (x < width) {
-					return getValue(x + 1, y);
-				}
-				return 255;
-			case 180:
-				if (y < height) {
-					return getValue(x, y + 1);
-				}
-				return 255;
-			case 270:
-				if (x > 0) {
-					return getValue(x - 1, y);
-				}
-				return 255;
-			default:
-				return 255;
+		return (countData[y][x] > 0 && mapData[y][x] > 0);
+	}
+	
+	@Override
+	public String toString() {
+		StringBuilder sb = new StringBuilder();
+		for (int y = 0; y < height; y++) {
+			for (int x = 0; x < width; x++) {
+				sb.append(occupied(x, y) ? "*" : " ");
+			}
+			sb.append("\n");
 		}
+		return sb.toString();
 	}
 }

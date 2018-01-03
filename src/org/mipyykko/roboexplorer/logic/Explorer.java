@@ -4,6 +4,7 @@ import lejos.nxt.Button;
 import lejos.nxt.LCD;
 import lejos.nxt.NXTRegulatedMotor;
 import lejos.nxt.UltrasonicSensor;
+import lejos.nxt.comm.*;
 import lejos.robotics.RangeReadings;
 import lejos.robotics.RangeScanner;
 import lejos.robotics.RotatingRangeScanner;
@@ -30,23 +31,30 @@ public class Explorer {
 	private NXTRegulatedMotor leftMotor, rightMotor, ultrasonicMotor;
 	private UltrasonicSensor ultrasonicSensor;
 
-	int x, y, movement;
-	final int xsize = 20;
-	final int ysize = 20;
+	int x, y;
+	double travelSpeed, rotateSpeed, travelDistance, distanceThreshold;
+	final float xsize = 40;
+	final float ysize = 40;
 	int heading;
+	
+	private boolean DEBUG;
 	
 	public Explorer() {
 		this.config = new Config();
+		this.DEBUG = !config.get("debug").isEmpty();
+		
+		if (DEBUG) {
+			RConsole.openUSB(30);
+		}
 		this.menu = new Menu(this.config);
 		try {
-			this.map = new RoboMap(xsize, ysize);
+			this.map = new RoboMap((int) xsize, (int) ysize);
 		} catch (Exception e) {
 			e.printStackTrace();
 			System.exit(1);
 		}
 		this.x = 0;
 		this.y = 0;
-		this.movement = 1;
 		this.heading = 0;
 	}
 	
@@ -66,15 +74,20 @@ public class Explorer {
 		this.rightMotor = new NXTRegulatedMotor(config.getMotorPort("rightMotorPort"));
 		this.ultrasonicMotor = new NXTRegulatedMotor(config.getMotorPort("ultrasonicMotorPort"));
 		this.ultrasonicSensor = new UltrasonicSensor(config.getSensorPort("ultrasonicSensorPort"));
+		this.travelSpeed = config.getDouble("travelSpeed");
+		this.rotateSpeed = config.getDouble("rotateSpeed");
+		this.travelDistance = config.getDouble("travelDistance");
+		this.distanceThreshold = config.getDouble("distanceThreshold");
 	}
 	
 	private void run() {
 		DifferentialPilot pilot = new DifferentialPilot(config.getDouble("wheelDiameter"), config.getDouble("trackWidth"), leftMotor, rightMotor, false);
 		OdometryPoseProvider poseProvider = new OdometryPoseProvider(pilot);
-		Pose pose = new Pose(0, 0, 0);
+		// start from the center
+		Pose pose = new Pose((float) ((xsize / 2) * travelDistance), (float) ((ysize / 2) * travelDistance), 0);
 		poseProvider.setPose(pose);
-		pilot.setTravelSpeed(5);
-		pilot.setRotateSpeed(25);
+		pilot.setTravelSpeed(travelSpeed);
+		pilot.setRotateSpeed(rotateSpeed);
 		RangeScanner scanner = new RotatingRangeScanner(ultrasonicMotor, ultrasonicSensor);
 		scanner.setAngles(new float[]{90, 0, -90});
 		
@@ -84,6 +97,10 @@ public class Explorer {
 			double left = readings.getRange(0);
 			double forward = readings.getRange(1);
 			double right = readings.getRange(2);
+
+			x = (int) (poseProvider.getPose().getX() / travelDistance);
+			y = (int) (poseProvider.getPose().getY() / travelDistance);
+			heading = (int) poseProvider.getPose().getHeading();
 
 			LCD.clear();
 			LCD.drawString("forward: ", 0, 0);
@@ -101,7 +118,6 @@ public class Explorer {
 			LCD.drawString(poseProvider.getPose().getX() + "", 7, 5);
 			LCD.drawString(poseProvider.getPose().getY() + "", 7, 6);
 			
-			heading = (int) poseProvider.getPose().getHeading();
 			try {
 				Thread.sleep(1000);
 			} catch (Exception e) {
@@ -113,41 +129,28 @@ public class Explorer {
 			} catch (Exception e) {
 				// ....
 			}
+		
+			Pair[] relatives = getRelatives();
+			Pair relativeLeft = relatives[0];
+			Pair relativeRight = relatives[1];
+			Pair relativeForward = relatives[2];
 			
-			if (forward > 10 && forward < 255 && map.getValueFromHeading(x, y, heading) > 10) {
+			// can go off the map 
+			if (!map.occupied(x + relativeForward.x, y + relativeForward.y)) {
 				pilot.travel(5);
-
-				switch (heading) {
-					case 0: 
-						y++;
-						break;
-					case 180:
-						y--;
-						break;
-					case 90:
-						x++;
-						break;
-					case 270:
-						x--;
-						break;
-					default:
-						// what?
-				}
-			} 
-			// TODO: relativeLeft & relativeRight here, now it goes off the map in some cases
-			else if (x < xsize && right > 10 && right < 255 && map.getValueFromHeading(x, y, heading + 90) > 10) {
-//				changeHeading(90);
-				pilot.rotate(-90); // positive = left
-				// turn right
-			} else if (x > 0 && left > 10 && left < 255 && map.getValueFromHeading(x, y, heading - 90) > 10) {
-//				changeHeading(-90);
+			} else if (!map.occupied(x + relativeRight.x, y + relativeRight.y)) {
+				pilot.rotate(-90);
+			} else if (!map.occupied(x + relativeLeft.x, y + relativeLeft.y)) {
 				pilot.rotate(90);
-				// turn left
 			} else {
-//				changeHeading(180);
-				pilot.rotate(-180);
-				// turn back
+				pilot.rotate(180);
 			}
+			if (DEBUG) {
+				RConsole.println(map.toString());
+			}
+		}
+		if (DEBUG) {
+			RConsole.close();
 		}
 	}
 
@@ -161,62 +164,56 @@ public class Explorer {
 		}
 	}
 	
-	private void setData(double left, double right, double forward) throws Exception {
+	private Pair[] getRelatives() {
+		Pair relativeLeft = new Pair(0, 1);
+		Pair relativeRight = new Pair(0, -1);
+		Pair relativeForward = new Pair(1, 0);
 		
-		Pair relativeLeft, relativeRight, relativeForward;
-		int relativeX = x;
-		int relativeY = y;
-		int relativeXsize = xsize;
-		int relativeYsize = ysize;
-		
-		switch (heading) {
-			case 0:
-			default:
-				relativeLeft = new Pair(-1, 0);
-				relativeRight = new Pair(1, 0);
-				relativeForward = new Pair(0, 1);
-				break;
-			case 90:
-				relativeLeft = new Pair(0, 1);
-				relativeRight = new Pair(0, -1);
-				relativeForward = new Pair(1, 0);
-				relativeX = y;
-				relativeY = x;
-				relativeXsize = ysize;
-				relativeYsize = xsize;
-				break;
-			case 180:
-				relativeLeft = new Pair(1, 0);
-				relativeRight = new Pair(-1, 0);
-				relativeForward = new Pair(0, -1);
-				break;
-			case 270:
-				relativeLeft = new Pair(0, -1);
-				relativeRight = new Pair(0, 1);
-				relativeForward = new Pair(-1, 0);
-				relativeX = y;
-				relativeY = x;
-				relativeXsize = ysize;
-				relativeYsize = xsize;
-				break;
+		if (heading >= 0 && heading < 10 || heading < -170) {
+			// default
 		}
-		if (relativeX > 0 && relativeX < relativeXsize && map.getValue(x + relativeLeft.x, y + relativeLeft.y) < left) {
-			map.setValue(x + relativeLeft.x, y + relativeLeft.y, (int) left);
+		if (heading >= 80 && heading < 100) {
+			relativeLeft = new Pair(1, 0);
+			relativeRight = new Pair(-1, 0);
+			relativeForward = new Pair(0, -1);
 		}
-		if (relativeX < relativeXsize && relativeX > 0 && map.getValue(x + relativeRight.x, y + relativeRight.y) < right) {
-			map.setValue(x + relativeRight.x, y + relativeRight.y, (int) right);
+		if (heading > 170 || (heading > -10 && heading < 0)) {
+			relativeLeft = new Pair(0, -1);
+			relativeRight = new Pair(0, 1);
+			relativeForward = new Pair(-1, 0);
 		}
-		if (relativeY < relativeYsize && relativeY > 0 && map.getValue(x + relativeForward.x, y + relativeForward.y) < forward) {
-			map.setValue(x + relativeForward.x, y + relativeForward.y, (int) forward);
+		if (heading <= -10 && heading > -30) {
+			relativeLeft = new Pair(-1, 0);
+			relativeRight = new Pair(1, 0);
+			relativeForward = new Pair(0, 1);
 		}
+		return new Pair[]{relativeLeft, relativeRight, relativeForward};
 	}
 	
-	private void changeHeading(int h) {
-		heading += h;
-		if (heading < 0) { 
-			heading = 360 + heading;
-		} else if (heading >= 360) {
-			heading = heading - 360;
+	private void setData(double left, double right, double forward) throws Exception {
+		Pair[] relatives = getRelatives();
+		Pair relativeLeft = relatives[0];
+		Pair relativeRight = relatives[1];
+		Pair relativeForward = relatives[2];
+		
+		map.incCount(x + relativeLeft.x, y + relativeLeft.y);
+		map.incCount(x + relativeForward.x, y + relativeForward.y);
+		map.incCount(x + relativeRight.x, y + relativeRight.y);
+		
+		if (left >= 0 && left <= travelSpeed * 3) {
+			map.incMap(x + relativeLeft.x, y + relativeLeft.y);
+		} else {
+			map.decMap(x + relativeLeft.x, y + relativeLeft.y);
+		}
+		if (forward >= 0 && forward <= travelSpeed * 3) {
+			map.incMap(x + relativeForward.x, y + relativeForward.y);
+		} else {
+			map.decMap(x + relativeForward.x, y + relativeForward.y);
+		}
+		if (right >= 0 && right <= travelSpeed * 3) {
+			map.incMap(x + relativeRight.x, y + relativeRight.y);
+		} else {
+			map.decMap(x + relativeRight.x, y + relativeRight.y);
 		}
 	}
 }
