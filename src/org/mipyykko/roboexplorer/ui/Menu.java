@@ -1,5 +1,6 @@
 package org.mipyykko.roboexplorer.ui;
 import lejos.nxt.Button;
+import lejos.nxt.LCD;
 import lejos.util.TextMenu;
 
 import org.mipyykko.roboexplorer.config.Config;
@@ -41,9 +42,43 @@ public class Menu {
 		return -1;
 	}
 	
-	public static void configMenu() {
-		// debug 
+	public void configMenu() {
+		while (!Button.ESCAPE.isPressed()) {
+			String[] configKeys = config.getConfigKeys();
+			TextMenu configMenu = new TextMenu(configKeys, 1, "Config");
+			int menuChoice = configMenu.select();
+			String selectedKey = configKeys[menuChoice];
+			if (selectedKey.indexOf("Motor") >= 0) {
+				String motorPortChoice = motorPortMenu(selectedKey);
+				config.set(selectedKey, motorPortChoice);
+			} else if (selectedKey.indexOf("Sensor") >= 0) {
+				String sensorPortChoice = sensorPortMenu(selectedKey);
+				config.set(selectedKey, sensorPortChoice);
+			} else {
+				// float value select
+			}
+		}
 		Screen.showText("this is a rather long error message with spam and asdfsdfsdfdfdfdfdfdf", 0, 0);
 		while (!Button.ESCAPE.isPressed()) { Thread.yield(); }	
+	}
+	
+	private String motorPortMenu(String port) {
+		while (!Button.ESCAPE.isPressed()) {
+			LCD.clear();
+			LCD.drawString("current: " + config.get(port), 0, 1);
+			TextMenu portMenu = new TextMenu(new String[]{"A", "B", "C"}, 2, port);
+			return "" + 'A' + portMenu.select();
+		}
+		return config.get(port);
+	}
+	
+	private String sensorPortMenu(String port) {
+		while (!Button.ESCAPE.isPressed()) {
+			LCD.clear();
+			LCD.drawString("current: S" + config.get(port), 0, 1);
+			TextMenu portMenu = new TextMenu(new String[]{"S1", "S2", "S3", "S4"}, 2, port);
+			return "" + 1 + portMenu.select();
+		}
+		return config.get(port);
 	}
 }

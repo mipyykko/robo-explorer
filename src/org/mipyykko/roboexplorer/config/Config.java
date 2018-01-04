@@ -5,12 +5,12 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.Hashtable;
+import java.util.List;
 import java.util.Properties;
 
-import lejos.nxt.Button;
-import lejos.nxt.LCD;
 import lejos.nxt.MotorPort;
 import lejos.nxt.SensorPort;
 
@@ -123,4 +123,12 @@ public class Config {
 		return true;
 	}
 		
+	public String[] getConfigKeys() {
+		List<String> keys = new ArrayList<String>();
+		Enumeration<String> vals = defaultValues.keys();
+		while (vals.hasMoreElements()) {
+			keys.add(vals.nextElement());
+		}
+		return (String[]) keys.toArray();
+	}
 }

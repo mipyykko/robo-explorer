@@ -15,7 +15,6 @@ public class Convert {
 //		if (port.isEmpty()) {
 //			throw new Exception("no motorport in config");
 //		}
-		
 		switch (port.charAt(0)) {
 			case 'A':
 				return MotorPort.A;
@@ -24,9 +23,9 @@ public class Convert {
 			case 'C':
 				return MotorPort.C;
 			default:
-				return null;
 //				throw new Exception("invalid motorport config");
 		}
+		return null;
 	}
 	
 	public String motor(MotorPort motorPort) {
