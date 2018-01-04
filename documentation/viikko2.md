@@ -1,6 +1,6 @@
 ### Viikkoraportti 2
 ###### 24.12.-29.12.
-##### Käytetty aika: 11h
+###### Käytetty aika: 11h
 
 Luotiin uusi projektipohja esimerkin pohjalta. Aluksi lähdetty koodaamaan lähinnä pakettirakennetta ja konfiguraatioluokkaa johon heti kättelyssä mahdollisuus ladata ja tallentaa asetuksia ohjausyksikön muistiin lähinnä säästämään aikaa ja hermoja testausvaihetta silmälläpitäen. Aiemman kokeilun perusteella tiedän suurinpiirtein mitä logiikkapuolelle on tulossa ainakin perusominaisuuksia varten. Koska robotti hiihtää edelleen suksien varassa, testausta on turha aloittaa ennen puuttuvien osien saamista.
 
