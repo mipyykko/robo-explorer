@@ -82,6 +82,7 @@ public class Explorer {
 	
 	private void run() {
 		DifferentialPilot pilot = new DifferentialPilot(config.getDouble("wheelDiameter"), config.getDouble("trackWidth"), leftMotor, rightMotor, false);
+		// TODO: replace with MCLPoseProvider
 		OdometryPoseProvider poseProvider = new OdometryPoseProvider(pilot);
 		// start from the center
 		Pose pose = new Pose((float) ((xsize / 2) * travelDistance), (float) ((ysize / 2) * travelDistance), 0);
@@ -200,17 +201,17 @@ public class Explorer {
 		map.incCount(x + relativeForward.x, y + relativeForward.y);
 		map.incCount(x + relativeRight.x, y + relativeRight.y);
 		
-		if (left >= 0 && left <= travelSpeed * 3) {
+		if (left >= 0 && left <= distanceThreshold) {
 			map.incMap(x + relativeLeft.x, y + relativeLeft.y);
 		} else {
 			map.decMap(x + relativeLeft.x, y + relativeLeft.y);
 		}
-		if (forward >= 0 && forward <= travelSpeed * 3) {
+		if (forward >= 0 && forward <= distanceThreshold) {
 			map.incMap(x + relativeForward.x, y + relativeForward.y);
 		} else {
 			map.decMap(x + relativeForward.x, y + relativeForward.y);
 		}
-		if (right >= 0 && right <= travelSpeed * 3) {
+		if (right >= 0 && right <= distanceThreshold) {
 			map.incMap(x + relativeRight.x, y + relativeRight.y);
 		} else {
 			map.decMap(x + relativeRight.x, y + relativeRight.y);
