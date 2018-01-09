@@ -84,7 +84,10 @@ public class Menu {
 			LCD.drawString("current: " + config.get(port), 0, 0);
 			TextMenu portMenu = new TextMenu(new String[]{"S1", "S2", "S3", "S4"}, 2, port);
 			int currentChoice = Integer.parseInt("" + config.get(port).charAt(1)) - 1;
-			return "" + 1 + portMenu.select(currentChoice);
+			int selection = portMenu.select(currentChoice);
+			if (selection >= 0 && selection <= 3) {
+				return "S" + 1 + selection;
+			}
 		}
 		return config.get(port);
 	}
