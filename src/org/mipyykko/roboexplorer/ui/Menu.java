@@ -43,10 +43,12 @@ public class Menu {
 	}
 	
 	public void configMenu() {
+		int currentChoice = 0;
 		while (!Button.ESCAPE.isPressed()) {
 			String[] configKeys = config.getConfigKeys();
 			TextMenu configMenu = new TextMenu(configKeys, 1, "Config");
-			int menuChoice = configMenu.select();
+			int menuChoice = configMenu.select(currentChoice);
+			currentChoice = menuChoice;
 			String selectedKey = configKeys[menuChoice];
 			if (selectedKey.indexOf("Motor") >= 0) {
 				String motorPortChoice = motorPortMenu(selectedKey);
@@ -58,16 +60,20 @@ public class Menu {
 				// float value select
 			}
 		}
-		Screen.showText("this is a rather long error message with spam and asdfsdfsdfdfdfdfdfdf", 0, 0);
+		Screen.showText("this is a rather long error message for testing", 0, 0);
 		while (!Button.ESCAPE.isPressed()) { Thread.yield(); }	
 	}
 	
 	private String motorPortMenu(String port) {
 		while (!Button.ESCAPE.isPressed()) {
 			LCD.clear();
-			LCD.drawString("current: " + config.get(port), 0, 1);
+			LCD.drawString("current: " + config.get(port), 0, 0);
 			TextMenu portMenu = new TextMenu(new String[]{"A", "B", "C"}, 2, port);
-			return "" + 'A' + portMenu.select();
+			int currentChoice = (int) (config.get(port).charAt(0) - 'A');
+			int selection = portMenu.select(currentChoice);
+			if (selection >= 0 && selection <= 2) {
+				return "" + 'A' + selection;
+			}
 		}
 		return config.get(port);
 	}
@@ -75,9 +81,10 @@ public class Menu {
 	private String sensorPortMenu(String port) {
 		while (!Button.ESCAPE.isPressed()) {
 			LCD.clear();
-			LCD.drawString("current: S" + config.get(port), 0, 1);
+			LCD.drawString("current: " + config.get(port), 0, 0);
 			TextMenu portMenu = new TextMenu(new String[]{"S1", "S2", "S3", "S4"}, 2, port);
-			return "" + 1 + portMenu.select();
+			int currentChoice = Integer.parseInt("" + config.get(port).charAt(1)) - 1;
+			return "" + 1 + portMenu.select(currentChoice);
 		}
 		return config.get(port);
 	}

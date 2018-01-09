@@ -8,7 +8,9 @@ import lejos.nxt.comm.*;
 import lejos.robotics.RangeReadings;
 import lejos.robotics.RangeScanner;
 import lejos.robotics.RotatingRangeScanner;
+import lejos.robotics.localization.MCLPoseProvider;
 import lejos.robotics.localization.OdometryPoseProvider;
+import lejos.robotics.mapping.NXTNavigationModel;
 import lejos.robotics.navigation.DifferentialPilot;
 import lejos.robotics.navigation.Pose;
 
@@ -42,7 +44,7 @@ public class Explorer {
 	public Explorer() {
 		this.config = new Config();
 		this.DEBUG = !config.get("debug").isEmpty();
-		
+
 		if (DEBUG) {
 			RConsole.openUSB(30);
 		}
