@@ -31,7 +31,7 @@ public class Config {
 	final String ULTRASONIC_SENSOR_DEFAULT_PORT = "S4";
 	
 	final String WHEEL_DEFAULT_DIAMETER = "2.24";
-	final String TRACK_DEFAULT_WIDTH = "4.8";
+	final String TRACK_DEFAULT_WIDTH = new Double(12 / 2.54).toString();
 	
 	final String TRAVEL_DEFAULT_SPEED = "5";
 	final String ROTATE_DEFAULT_SPEED = "25";

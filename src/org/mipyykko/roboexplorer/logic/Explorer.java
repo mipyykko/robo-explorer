@@ -46,7 +46,7 @@ public class Explorer {
 	double travelSpeed, rotateSpeed, travelDistance, distanceThreshold;
 	final int xsize = 40;
 	final int ysize = 40;
-	int heading;
+	float heading;
 	
 	private MCLPoseProvider poseProvider;
 	private MCLParticleSet particles;
@@ -102,6 +102,10 @@ public class Explorer {
 		run();
 	}
 	
+	/**
+	 * Alustaa moottorit ja sensorit
+	 */
+	
 	private void init() {
 		this.leftMotor = new NXTRegulatedMotor(config.getMotorPort("leftMotorPort"));
 		this.rightMotor = new NXTRegulatedMotor(config.getMotorPort("rightMotorPort"));
@@ -132,11 +136,16 @@ public class Explorer {
 		poseProvider.setInitialPose(new Pose((float) (xsize / 2), (float) (ysize / 2), 0), 1, 1);
 		particles = poseProvider.getParticles();
 
+		while (poseProvider.isBusy()) {}
+		
 		pilot.setTravelSpeed(travelSpeed);
 		pilot.setRotateSpeed(rotateSpeed);
-		pilot.setAcceleration(40);
+		pilot.setAcceleration(10);
 	}
 	
+	/**
+	 * Skannaa ympäristöään annettujen asetusten perusteella ja lähettää tiedot koneelle
+	 */
 	private void scan() {
 		rangeReadings = scanner.getRangeValues();
 		
@@ -157,7 +166,7 @@ public class Explorer {
 			poseProvider.update(rangeReadings);
 		}
 		
-		while (poseProvider.isBusy());
+		while (poseProvider.isBusy()) {};
 		
 		connection.sendData(poseProvider, rangeReadings);
 	}
@@ -167,6 +176,8 @@ public class Explorer {
 		
 //		poseProvider.generateParticles();
 //		System.out.println("particles generated");
+		
+		heading = 90; // magic number?
 		
 		while (!Button.ESCAPE.isPressed()) {
 			System.out.println("in the loop");
@@ -178,39 +189,68 @@ public class Explorer {
 				continue;
 			}
 
-			float correction = 0;
-			if (!rangeReadings.incomplete()) {
-				if (heading > 0) {
-					while (heading > 22.5) heading -= 45;
-					correction = -heading;
-				} else {
-					heading = -heading;
-					while (heading > 22.5) heading -= 45;
-					correction = heading;
-				}
-				System.out.println("correction: " + correction);
-			}
-			pilot.rotate(maxReading.getAngle() + correction);
+//			if (!rangeReadings.incomplete()) {
+//				if (heading > 0) {
+//					while (heading > 22.5) heading -= 45;
+//					correction = -heading;
+//				} else {
+//					heading = -heading;
+//					while (heading > 22.5) heading -= 45;
+//					correction = heading;
+//				}
+//				System.out.println("correction: " + correction);
+//			}
+			float toRotate = maxReading.getAngle();
+			pilot.rotate(toRotate);
 			pilot.travel(maxReading.getRange() / 4, true);
+			
 			while (pilot.isMoving() && !pilot.isStalled()) {
 				float fwd = scanner.getRangeFinder().getRange();
 				if (fwd < 10) {
 					System.out.println("about to hit something!");
 					pilot.stop();
+					
 					break;
 				}
 			}
+			heading += toRotate;
+
 			if (pilot.isStalled()) {
 				pilot.travel(-scanner.getRangeFinder().getRange());
 			}
-			
+			// test for 90-degree turns
+//			pilot.travel(50 / 2.54);
+//			pilot.rotate(-90, false);
+//			while (pilot.isMoving()) {}
+
 			poseProvider.estimatePose();
 			Pose pose = poseProvider.getEstimatedPose();
+			
+			while (poseProvider.isBusy()) {}
+			
+//			Button.waitForAnyPress();
+
+//			heading -= 90;
+
+			while (heading < -180) heading += 360;
+			while (heading > 180) heading -= 360;
+			
+//			System.out.println("expected heading: " + heading);
+//			System.out.println("got heading: " + pose.getHeading());
+//			Button.waitForAnyPress();
+			
+			float correction = heading - pose.getHeading();
+			while (correction < -180) correction += 360;
+			while (correction > 180) correction -= 360;
+			pilot.rotate(correction);
+
+			while (pilot.isMoving()) {}
 			
 			x = (int) (pose.getX() / travelDistance);
 			y = (int) (pose.getY() / travelDistance);
 			heading = (int) pose.getHeading();
 
+			
 			LCD.clear();
 			LCD.drawString("forward: ", 0, 0);
 			LCD.drawString("left: ", 0, 1);

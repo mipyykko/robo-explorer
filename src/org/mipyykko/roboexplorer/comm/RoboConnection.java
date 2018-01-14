@@ -3,10 +3,11 @@ package org.mipyykko.roboexplorer.comm;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 
-import lejos.nxt.Button;
 import lejos.nxt.comm.BTConnection;
 import lejos.nxt.comm.Bluetooth;
 import lejos.robotics.RangeReadings;
+import lejos.robotics.localization.MCLParticle;
+import lejos.robotics.localization.MCLParticleSet;
 import lejos.robotics.localization.MCLPoseProvider;
 import lejos.robotics.navigation.Pose;
 
@@ -54,12 +55,16 @@ public class RoboConnection {
 			} else {
 				dos.writeInt(0);
 			}
+			MCLParticleSet mps = poseProvider.getParticles();
+			dos.writeInt(mps.numParticles());
+			for (int i = 0; i < mps.numParticles(); i++) {
+				MCLParticle mp = mps.getParticle(i);
+				dos.writeFloat(mp.getPose().getX());
+				dos.writeFloat(mp.getPose().getY());
+				dos.writeFloat(mp.getPose().getHeading());
+			}
 			dos.flush();
 			System.out.println("sent data");
-//			MCLParticleSet mps = poseProvider.getParticles();
-//			dos.writeInt(mps.numParticles());
-//			for (int i = 0; i < mps.numParticles(); i++) {
-//			}
 		} catch (Exception e) {
 			//e.printStackTrace();
 			//Button.waitForAnyPress();
