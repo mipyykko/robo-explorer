@@ -5,7 +5,7 @@
 
 Testataan, kuinka hyvin robotti pysyy suunnassaan käännöksissä ja kuinka hyvin sensoridata pitää tämän jälkeen paikkansa. Teipattiin lattiaan 50x50 cm neliö ja kovakoodattiin robotti kulkemaan 50 cm eteenpäin ja kääntymään oikealle 90 astetta, tämän jälkeen olinpaikkansa tietokoneelle BT-yhteyden kautta ilmoittaen. Samalla karttaohjelma piirsi kuvaa.
 
-Ensimmäisellä yrityksellä todettiin, että noin toisella kokonaisella kierroksella alkoi jokseenkin selvästi näkyä lievä oikealle viettäminen. Tämä näkyi myös visualisoinnissa:
+Ensimmäisellä yrityksellä todettiin, että noin toisella kokonaisella kierroksella alkoi jokseenkin selvästi näkyä lievä oikealle viettäminen. Tämä näkyi myös visualisoinnissa:  
 ![Testi 1.](testi1.png)   
 ###### Kuvassa robotin reitti sinisellä ja anturin mittatulokset punaisella.
 Huomataan, että robotin DifferentialPilot-luokalle annettavat mitat ovat hieman pielessä -- raideväli on jokseenkin tasan 12 senttimetriä, mutta koodi vaatii tuumakokoa ja pyöristystä oli ehkä liikaa.
