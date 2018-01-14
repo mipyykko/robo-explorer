@@ -29,6 +29,6 @@ public class Screen {
 			LCD.drawString(lines[line], x, y + line);
 		}
 		
-		Button.waitForPress();
+		Button.waitForAnyPress();
 	}
 }
