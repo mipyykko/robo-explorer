@@ -13,6 +13,7 @@ import lejos.robotics.navigation.Pose;
 
 import org.mipyykko.roboexplorerpc.gui.GUI;
 import org.mipyykko.roboexplorerpc.model.RobotData;
+import org.mipyykko.roboexplorerpc.model.RobotMap;
 
 public class Logic /*extends Observable*/ {
 
@@ -31,16 +32,21 @@ public class Logic /*extends Observable*/ {
 	private Pose pose;
 	private List<MCLParticle> curParticles;
 	
+	private RobotMap map;
+	
 	private Reader reader = new Reader();
 	
 	private boolean isUpdating = false;
 	
 	private GUI gui;
 	
+	private int width = 100, height = 100;
+	
 	public Logic(GUI gui) {
 		this.conn = new NXTConnector();
 		this.status = Status.OK;
 		this.gui = gui;
+		gui.setMap(new RobotMap(width, height));
 	}
 	
 	public void connect() {

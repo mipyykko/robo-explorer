@@ -18,6 +18,7 @@ import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JList;
 import javax.swing.JPanel;
+import javax.swing.JTextField;
 import javax.swing.SwingUtilities;
 
 import lejos.robotics.RangeReading;
@@ -25,6 +26,7 @@ import lejos.robotics.localization.MCLParticle;
 
 import org.mipyykko.roboexplorerpc.logic.Logic;
 import org.mipyykko.roboexplorerpc.model.RobotData;
+import org.mipyykko.roboexplorerpc.model.RobotMap;
 
 public class GUI extends JPanel implements ActionListener {
 	
@@ -33,9 +35,9 @@ public class GUI extends JPanel implements ActionListener {
 	private JButton connectButton = new JButton("Connect to NXT");
 	private JLabel connectStatusText = new JLabel("not connected");
 	
-	private JLabel headingTextLabel = new JLabel(" ");
-	private JLabel xTextLabel = new JLabel(" ");
-	private JLabel yTextLabel = new JLabel(" ");
+	private JTextField headingTextField= new JTextField(3);
+	private JTextField xTextField = new JTextField(3);
+	private JTextField yTextField  = new JTextField(3);
 
 	private DefaultListModel headingHistoryModel = new DefaultListModel();
 	private JList headingHistoryList = new JList(headingHistoryModel);
@@ -47,7 +49,8 @@ public class GUI extends JPanel implements ActionListener {
 	private BufferedImage canvasImage;
 	private Graphics2D canvasGraphics;
 
-
+	private RobotMap map;
+	
 	private float lastX = -1, lastY = -1;
 	private RobotData newestRobotData;
 	private List<RobotData> robotData = new ArrayList<RobotData>();
@@ -69,35 +72,39 @@ public class GUI extends JPanel implements ActionListener {
 		
 		frame.setSize(width, height);
 		
-		JPanel connectPanel = new JPanel();
-		connectPanel.add(connectButton);
-		connectPanel.add(connectStatusText);
+		JPanel topPanel = new JPanel();
+		topPanel.setLayout(new GridLayout(1, 2));
+		topPanel.add(connectButton);
+		topPanel.add(connectStatusText);
 		connectButton.addActionListener(this);
+
+		JPanel coordPanel = new JPanel();
+		coordPanel.setLayout(new GridLayout(3, 1));
+		coordPanel.add(headingTextField);
+		coordPanel.add(xTextField);
+		coordPanel.add(yTextField);
+		
+		topPanel.add(coordPanel);
 		
 		JPanel mainPanel = new JPanel();
 		mainPanel.setBorder(BorderFactory.createRaisedBevelBorder());
 		mainPanel.setLayout(new GridLayout(2, 0));
-		mainPanel.add(connectPanel);
+		mainPanel.add(topPanel);
 		
-		JPanel coordPanel = new JPanel();
-		coordPanel.setLayout(new GridLayout(3, 1));
-		coordPanel.add(headingTextLabel);
-		coordPanel.add(xTextLabel);
-		coordPanel.add(yTextLabel);
-		coordPanel.setPreferredSize(new Dimension(120, 600));
+		JPanel leftPanel = new JPanel();
+		leftPanel.setPreferredSize(new Dimension(100, 600));
 		headingHistoryModel.addElement("0");
-		coordPanel.add(headingHistoryList);
-		
-		mainPanel.add(coordPanel);
-		canvas = new RobotCanvas(width, height);
+		leftPanel.add(headingHistoryList);
+
+		canvas = new RobotCanvas(width, height, map);
 		frame.add(canvas, BorderLayout.CENTER);
+		canvas.createImage();
 		canvasImage = canvas.getImage();
 		canvas.setBackground(Color.white);
 		canvasGraphics = canvas.getGraphics();
 
 		frame.add(mainPanel, BorderLayout.NORTH);
-		frame.add(coordPanel, BorderLayout.WEST);
-
+		frame.add(leftPanel, BorderLayout.WEST);
 		frame.pack();
 		
 		repaint();
@@ -159,48 +166,16 @@ public class GUI extends JPanel implements ActionListener {
 			float curX = 100 + (newestRobotData.getPose().getX() * 2);
 			float curY = 100 + (newestRobotData.getPose().getY() * 2);
 			float curHeading = newestRobotData.getPose().getHeading() + 180;
-			headingTextLabel.setText("" + (int) curHeading);
-			xTextLabel.setText("" + (int) curX);
-			yTextLabel.setText("" + (int) curY);
+			headingTextField.setText("" + (int) curHeading);
+			xTextField.setText("" + (int) curX);
+			yTextField.setText("" + (int) curY);
 			if (canvasGraphics == null) {
 				canvas.createImage();
 				canvas.setBackground(Color.white);
 				canvasGraphics = canvas.getGraphics();
 			}
-			canvasGraphics.setColor(canvas.getBackground());
-			canvasGraphics.drawRect(0, 0, canvas.getWidth(), canvas.getHeight());
-			canvasGraphics.setColor(Color.blue);
-			int idx = 0;
-			for (RobotData data : robotData) {
-				float x = 100 + (data.getPose().getX() * 2);
-				float y = 100 + (data.getPose().getY() * 2);
-				float heading = data.getPose().getHeading();
-				if (idx++ > 0) {
-					canvasGraphics.drawLine((int) lastX, (int) lastY, (int) x, (int) y);
-				}
-				lastX = x;
-				lastY = y;
-
-			}
-			canvasGraphics.setColor(Color.pink);
-			canvasGraphics.drawOval((int) curX, (int) curY, 4, 4);
-			canvasGraphics.setColor(Color.red);
-			for (RangeReading r : newestRobotData.getReadings()) {
-				if (r.getRange() == -1) continue;
-				System.out.println(r.getRange());
-				float rAngle = r.getAngle();
-				int endX = (int) (curX + Math.cos(Math.toRadians(curHeading + rAngle)) * r.getRange() * 2);
-				int endY = (int) (curY + Math.sin(Math.toRadians(curHeading + rAngle)) * r.getRange() * 2);
-				canvasGraphics.drawLine((int) curX, (int) curY, endX, endY);
-			}
-			canvasGraphics.setColor(Color.yellow);
-			for (MCLParticle mp : newestRobotData.getParticles()) {
-				float pX = 100 + mp.getPose().getX() * 2;
-				float pY = 100 + mp.getPose().getY() * 2;
-				canvasGraphics.drawLine((int) pX, (int) pY, (int) pX, (int) pY);
-			}
-			System.out.println(newestRobotData.getPose().getX() + " " + newestRobotData.getPose().getY());
-			canvas.repaint();
+			canvas.drawGrid();
+			canvas.drawPath(robotData);
 		}
 		frame.repaint();
 		repaint();
@@ -211,6 +186,9 @@ public class GUI extends JPanel implements ActionListener {
 		newestRobotData = data;//(RobotData) o;
 		robotData.add(newestRobotData);
 		updateCanvas();
-
+	}
+	
+	public void setMap(RobotMap map) {
+		this.map = map;
 	}
 }
