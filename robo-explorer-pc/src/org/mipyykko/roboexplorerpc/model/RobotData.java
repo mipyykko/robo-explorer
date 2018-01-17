@@ -2,6 +2,7 @@ package org.mipyykko.roboexplorerpc.model;
 
 import java.util.List;
 
+import lejos.robotics.RangeReading;
 import lejos.robotics.RangeReadings;
 import lejos.robotics.localization.MCLParticle;
 import lejos.robotics.navigation.Pose;
