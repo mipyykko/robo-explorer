@@ -13,6 +13,13 @@ import lejos.robotics.navigation.Pose;
 
 import org.mipyykko.roboexplorer.logic.Explorer;
 
+/**
+ * Huolehtii robotin ja tietokoneen välisestä yhteydestä.
+ * Yhteyslogiikka on saanut suuria vaikutteita esimerkkiprojekteista.
+ * 
+ * @author mipyykko
+ *
+ */
 public class RoboConnection {
 
 	private BTConnection connection;
@@ -50,6 +57,9 @@ public class RoboConnection {
 		}
 	}
 	
+	/**
+	 * Lukee tietokoneen lähettämää dataa ja käskyttää robottia sen mukaan.
+	 */
 	public boolean readData() {
 		float angle, distance;
 		
@@ -59,7 +69,7 @@ public class RoboConnection {
 			
 			switch (command) {
 				case ROTATE:
-					dis.readInt(); // no error check...
+					dis.readInt(); 
 					angle = dis.readFloat();
 					explorer.rotate(angle);
 					break;
@@ -84,13 +94,19 @@ public class RoboConnection {
 					explorer.stop();
 					break;
 			}
-		} catch (Exception e) {
-			
-		}
+		} catch (Exception e) {}
+
 		return false;
 	}
 	
-	public boolean sendData(Command command, Object... values) /*MCLPoseProvider poseProvider, RangeReadings rangeReadings)*/ {
+	/**
+	 * Lähettää dataa tietokoneelle. 
+	 * 
+	 * @param command
+	 * @param values 
+	 * @return
+	 */
+	public boolean sendData(Command command, Object... values) {
 		MCLPoseProvider poseProvider;
 		Pose pose;
 		
@@ -122,13 +138,10 @@ public class RoboConnection {
 						dos.writeFloat(mp.getPose().getY());
 						dos.writeFloat(mp.getPose().getHeading());
 					}
-					dos.flush();
-					System.out.println("sent data");
 					break;
 				case STOP_OBSTACLE:
 					dos.writeInt(command.ordinal());
 					dos.writeFloat((Float) values[0]);
-					dos.flush();
 					break;
 				case STOP_BUMP:
 					dos.writeInt(command.ordinal());
@@ -137,13 +150,14 @@ public class RoboConnection {
 					dos.writeFloat(pose.getX());
 					dos.writeFloat(pose.getY());
 					dos.writeFloat(pose.getHeading());
-					dos.flush();
 				case STOP_STALLED:
 					dos.writeInt(command.ordinal());
-					dos.flush();
 					break;
-					
+				case QUIT:
+					reader.running = false;
+					break;
 			}
+			dos.flush();
 		} catch (Exception e) {
 			//e.printStackTrace();
 			//Button.waitForAnyPress();
@@ -153,6 +167,12 @@ public class RoboConnection {
 		return true;
 	}
 	
+	/**
+	 * Tietokoneelta saapuvat viestit kuunnellaan omassa säikeessään.
+	 * 
+	 * @author mipyykko
+	 *
+	 */
 	class Reader extends Thread {
 		
 		public boolean running = false;

@@ -16,6 +16,13 @@ import org.mipyykko.roboexplorerpc.logic.Command;
 import org.mipyykko.roboexplorerpc.logic.Logic;
 import org.mipyykko.roboexplorerpc.model.RobotData;
 
+/**
+ * Huolehtii yhteyksistä robotin kanssa.
+ * Yhteyslogiikka on saanut suuria vaikutteita esimerkkiprojekteista.
+ * 
+ * @author mipyykko
+ *
+ */
 public class RoboConnection {
 
 	public enum Status {
@@ -67,15 +74,17 @@ public class RoboConnection {
 		}
 	}
 	
+	/**
+	 * Lähettää komentoja parametreineen robotille.
+	 * 
+	 */
 	public boolean sendData(Command command, float... values) {
 		try {
 			while (isSending) {
 				Thread.sleep(100);
 				Thread.yield();
 			}
-		} catch (Exception e) {
-			
-		}
+		} catch (Exception e) {}
 		
 		isSending = true;
 		try {
@@ -117,22 +126,9 @@ public class RoboConnection {
 			RobotData robotData = new RobotData()
 				.pose(pose)
 				.build();
-//		
-//			decideMove(robotData);
-//			gui.update(robotData);
-//			try {
-//				while (isSending) {
-//					Thread.sleep(100);
-//					Thread.yield();
-//				}
-//			} catch (Exception e) {
-//				e.printStackTrace();
-//			}
-//			
 			isUpdating = false;
 			ok = false;
 			return robotData;
-//			return true;
 		}
 		
 		isUpdating = false;
@@ -158,7 +154,6 @@ public class RoboConnection {
 			for (int i = 0; i < readingCount; i++) {
 				RangeReading rr = new RangeReading(dis.readFloat(), dis.readFloat());
 				curReadings.set(i, rr);
-				System.out.print(rr.getAngle() + ": " + rr.getRange()+ " ");
 			}
 			int particleCount = dis.readInt();
 			curParticles = new ArrayList<MCLParticle>();
@@ -166,10 +161,6 @@ public class RoboConnection {
 				MCLParticle mp = new MCLParticle(new Pose(dis.readFloat(), dis.readFloat(), dis.readFloat()));
 				curParticles.add(mp);
 			}
-			System.out.println("received particles " + particleCount);
-			System.out.println();
-			/*setChanged();
-			notifyObservers(robotData);*/
 			System.out.println("received ok data");
 			ok = true;
 		} catch (Exception e) {
@@ -184,27 +175,14 @@ public class RoboConnection {
 				.readings(curReadings)
 				.particles(curParticles)
 				.build();
-//			updateMap(robotData);
-//			decideMove(robotData);
-//			gui.update(robotData);
-//			try {
-//				while (isSending) {
-//					Thread.sleep(100);
-//					Thread.yield();
-//				}
-//			} catch (Exception e) {
-//				e.printStackTrace();
-//			}
-//			
+
 			isUpdating = false;
 			ok = false;
 			return robotData;
-//			return true;
 		}
 		
 		isUpdating = false;
 		return null;
-//		return false;
 	}
 
 	public boolean connected() {
@@ -215,6 +193,10 @@ public class RoboConnection {
 		return status;
 	}
 	
+	public void setLogic(Logic logic) {
+		this.logic = logic;
+	}
+
 	public boolean isUpdating() {
 		return isUpdating;
 	}
@@ -223,6 +205,12 @@ public class RoboConnection {
 		reader.running = false;
 	}
 
+	/**
+	 * Robotilta tulevaa viestiliikennettä hoitava säie.
+	 * 
+	 * @author mipyykko
+	 *
+	 */
 	class Reader extends Thread {
 
 		boolean running = false;
@@ -274,9 +262,5 @@ public class RoboConnection {
 				}
 			}
 		}
-	}
-
-	public void setLogic(Logic logic) {
-		this.logic = logic;
 	}
 }
