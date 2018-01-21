@@ -4,7 +4,6 @@ import lejos.nxt.LCD;
 import lejos.util.TextMenu;
 
 import org.mipyykko.roboexplorer.config.Config;
-import org.mipyykko.roboexplorer.util.RoboException;
 
 /**
  * Valikko ja siihen liittyvät toiminnot.
