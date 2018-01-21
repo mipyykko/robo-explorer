@@ -26,6 +26,7 @@ public class Menu {
 	 * @return 0 jos on valittu Start, muuten -1
 	 */
 	public int startMenu() {
+		LCD.clear();
 		while (!Button.ESCAPE.isPressed()) {
 			TextMenu startMenu = new TextMenu(new String[]{"Start", "Config"}, 1, "Robo Explorer");
 			int menuChoice = startMenu.select();
@@ -60,7 +61,6 @@ public class Menu {
 				// float value select
 			}
 		}
-		Screen.showText("this is a rather long error message for testing", 0, 0);
 		while (!Button.ESCAPE.isPressed()) { Thread.yield(); }	
 	}
 	

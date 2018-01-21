@@ -1,16 +1,10 @@
 package org.mipyykko.roboexplorerpc.logic;
 
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
-import java.io.EOFException;
-import java.util.ArrayList;
 import java.util.HashSet;
 
 import lejos.geom.Point;
-import lejos.pc.comm.NXTConnector;
 import lejos.robotics.RangeReading;
 import lejos.robotics.RangeReadings;
-import lejos.robotics.localization.MCLParticle;
 import lejos.robotics.navigation.Pose;
 
 import org.mipyykko.roboexplorerpc.conn.RoboConnection;
@@ -18,29 +12,21 @@ import org.mipyykko.roboexplorerpc.gui.GUI;
 import org.mipyykko.roboexplorerpc.model.RobotData;
 import org.mipyykko.roboexplorerpc.model.RobotMap;
 
-public class Logic /*extends Observable*/ {
+/**
+ * Robotin ja klientin logiikkaa.
+ * On saanut suuria vaikutteita esimerkkiprojekteista.
+ * 
+ * @author lego
+ *
+ */
+public class Logic {
 
 	public enum Status {
 		OK, CONNECTION_ERROR, UNKNOWN_ERROR;
 	}
 	
-//	private NXTConnector conn;
-//	private boolean connected;
-//	private Status status;
-//	
-//	private DataInputStream dis;
-//	private DataOutputStream dos;
-//	
-//	private RangeReadings curReadings;
-//	private Pose pose;
-//	private List<MCLParticle> curParticles;
-
 	private RoboConnection connection;
 	private RobotMap map;
-	
-//	private Reader reader = new Reader();
-	
-//	private boolean isUpdating = false, isSending = false;
 	
 	private GUI gui;
 	
@@ -48,8 +34,6 @@ public class Logic /*extends Observable*/ {
 	private int cellSize = 2;
 
 	public Logic(GUI gui) {
-//		this.conn = new NXTConnector();
-//		this.status = Status.OK;
 		this.connection = new RoboConnection();
 		connection.setLogic(this);
 		this.gui = gui;
@@ -65,6 +49,10 @@ public class Logic /*extends Observable*/ {
 		return coord / cellSize + 20;
 	}
 	
+	/** 
+	 * Päivitetään karttaa saadun sensoridatan perusteella.
+	 * 
+	 */
 	public boolean updateMap(RobotData robotData) {
 		if (robotData == null) return false;
 		
@@ -82,11 +70,13 @@ public class Logic /*extends Observable*/ {
 			float curHeading = currentPose.getHeading() + 180;
 			float startAngle = (float) Math.toRadians(curHeading + rr.getAngle() - 10);
 			float endAngle = (float) Math.toRadians(curHeading + rr.getAngle() + 10);
-
-			System.out.format("start %f end %f\n", startAngle, endAngle);
-			HashSet<Point> updated = new HashSet<Point>();
 			float theta = startAngle;
 			
+			HashSet<Point> updated = new HashSet<Point>();
+			
+			/* Käydään läpi suorat robotin nykyisestä sijainnista
+			 * 20 asteen mittaiselle ympyrän kaarelle. 
+			 */
 			while (theta <= endAngle) {
 				System.out.format("theta %f\n", theta);
 				int readingX = scaleCoord((int) (curX + (rr.getRange() / cellSize) * Math.sin(theta)));
@@ -120,22 +110,16 @@ public class Logic /*extends Observable*/ {
 				
 				int x = curX;
 				int y = curY;
-				
-				System.out.format("before line draw, longest %d, shortest %d, d1: %d, %d d2: %d, %d\n",
-						longest, shortest, dx1, dy1, dx2, dy2);
-				
+								
 				for (int i = 0; i <= longest; i++) {
 					if (x >= 0 && y >= 0 && x <= map.getWidth() && y <= map.getHeight() &&
 						!updated.contains(new Point(x, y))) {
 						updated.add(new Point(x, y));
-						float curValue = map.getValue(x, y);
-						System.out.print(x + "," + y + " curValue " + curValue + " ");
 						if (x != readingX && y != readingY) {
 							map.setFree(x, y);
 						} else {
 							map.setOccupied(x, y);
 						}
-						System.out.println("nextValue " + map.getValue(x, y));
 					}
 					num += shortest;
 					if (num >= longest) {
@@ -147,12 +131,14 @@ public class Logic /*extends Observable*/ {
 						y += dy2;
 					}
 				}
-				
 			}
 		}
 		return true;
 	}
 	
+	/**
+	 * Päätetään robotin seuraava siirto.
+	 */
 	public boolean decideMove(RobotData robotData) {
 		if (robotData == null) return false;
 
@@ -168,10 +154,13 @@ public class Logic /*extends Observable*/ {
 		}
 		float angles[] = new float[]{0, -90, 90};
 		
+		/*
+		 * Tällä hetkellä oletusarvoisena on pyrkiä menemään eteenpäin, sitten
+		 * oikealle ja sitten vasemmalle. 
+		 */
 		for (float angle : angles) {
 			float reading = rangeReadings.getRange(angle);
 			if (reading != -1) {
-				System.out.format("angle %f ok with %f?\n", angle, reading);
 				int futureX = scaleCoord((int) (curX + Math.cos(Math.toRadians(curHeading + angle)) * cellSize));
 				int futureY = scaleCoord((int) (curY + Math.sin(Math.toRadians(curHeading + angle)) * cellSize));
 				if (map.isFree(futureX, futureY) && reading > 10) {
@@ -202,66 +191,6 @@ public class Logic /*extends Observable*/ {
 		gui.update(data);
 	}
 	
-//	public boolean receiveScanData() {
-//		boolean ok = false;
-//		try {
-//			while (isUpdating || isSending) {
-//				Thread.sleep(100);
-//				Thread.yield();
-//			}
-//			isUpdating = true;
-//			pose = new Pose(dis.readFloat(), dis.readFloat(), dis.readFloat());
-//			System.out.println("heading: " + pose.getHeading() + " X " + pose.getX() + " Y " + pose.getY());
-//			int readingCount = dis.readInt();
-//			curReadings = new RangeReadings(readingCount);
-//			for (int i = 0; i < readingCount; i++) {
-//				RangeReading rr = new RangeReading(dis.readFloat(), dis.readFloat());
-//				curReadings.set(i, rr);
-//				System.out.print(rr.getAngle() + ": " + rr.getRange()+ " ");
-//			}
-//			int particleCount = dis.readInt();
-//			curParticles = new ArrayList<MCLParticle>();
-//			for (int i = 0; i < particleCount; i++) {
-//				MCLParticle mp = new MCLParticle(new Pose(dis.readFloat(), dis.readFloat(), dis.readFloat()));
-//				curParticles.add(mp);
-//			}
-//			System.out.println("received particles " + particleCount);
-//			System.out.println();
-//			/*setChanged();
-//			notifyObservers(robotData);*/
-//			System.out.println("received ok data");
-//			ok = true;
-//		} catch (Exception e) {
-//			System.out.println(e.getMessage());
-//			e.printStackTrace();
-//			isUpdating = false;
-//			return false;
-//		}
-//		if (ok) {
-//			RobotData robotData = new RobotData()
-//				.pose(pose)
-//				.readings(curReadings)
-//				.particles(curParticles)
-//				.build();
-//			updateMap(robotData);
-//			decideMove(robotData);
-//			gui.update(robotData);
-//			try {
-//				while (isSending) {
-//					Thread.sleep(100);
-//					Thread.yield();
-//				}
-//			} catch (Exception e) {
-//				e.printStackTrace();
-//			}
-//			
-//			isUpdating = false;
-//			ok = false;
-//			return true;
-//		}
-//		return false;
-//	}
-
 	public RoboConnection getConnection() {
 		return connection;
 	}

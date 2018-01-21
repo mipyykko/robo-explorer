@@ -39,8 +39,11 @@ public class Config {
 	
 	final String TRAVEL_DEFAULT_SPEED = "5";
 	final String ROTATE_DEFAULT_SPEED = "25";
-	final String TRAVEL_DEFAULT_DISTANCE = "5";
-	final String DISTANCE_DEFAULT_THRESHOLD = "25";
+	final String TRAVEL_DEFAULT_DISTANCE = "10";
+	final String DISTANCE_DEFAULT_THRESHOLD = "10";
+	
+	final String MAP_DEFAULT_WIDTH = "100";
+	final String MAP_DEFAULT_HEIGHT = "100";
 	
 	final Hashtable<String, String> defaultValues = new Hashtable<String, String>() {
 		{
@@ -56,6 +59,8 @@ public class Config {
 			put("rotateSpeed", ROTATE_DEFAULT_SPEED);
 			put("travelDistance", TRAVEL_DEFAULT_DISTANCE);
 			put("distanceThreshold", DISTANCE_DEFAULT_THRESHOLD);
+			put("mapWidth", MAP_DEFAULT_WIDTH);
+			put("mapHeight", MAP_DEFAULT_HEIGHT);
 			put("debug", "true");
 			
 		}

@@ -14,13 +14,22 @@ import lejos.robotics.localization.MCLParticle;
 import org.mipyykko.roboexplorerpc.model.RobotData;
 import org.mipyykko.roboexplorerpc.model.RobotMap;
 
+/**
+ * Kartan visualisaatio.
+ * On saanut suuria vaikutteita esimerkkiprojekteista.
+ * 
+ * @author mipyykko
+ *
+ */
 public class RobotCanvas extends JPanel {
 	
+	private static final long serialVersionUID = 1L;
 	private BufferedImage image;
 	private int width, height;
 	private List<RobotData> robotData;
 	
 	private int gridSpace = 10;
+	private int cellSize = 2;
 	
 	private RobotMap map;
 	
@@ -57,6 +66,7 @@ public class RobotCanvas extends JPanel {
 		for (int y = 0; y < map.getHeight(); y++) {
 			for (int x = 0; x < map.getWidth(); x++) {
 				float val = map.getValue(x, y);
+				// todennäköisyys esteelle harmaan eri sävyinä
 				int c = Math.max(0, Math.min(255, 128 + (int) (val * 128)));
 				g.setColor(new Color(c, c, c));
 				g.fillRect(x * gridSpace + 1, y * gridSpace + 1, gridSpace - 2, gridSpace - 2);
@@ -64,6 +74,17 @@ public class RobotCanvas extends JPanel {
 		}
 	}
 	
+	private int scaleCoord(float coord) {
+		return (int) coord / cellSize + 20;
+	}
+	
+	private int convCoord(float coord) {
+		return scaleCoord(coord) * gridSpace + (gridSpace / 2);
+	}
+
+	/**
+	 * Piirtää robotin reittiä, mittauksia ja MCL-algoritmin partikkeleita.
+	 */
 	public void drawPath(Graphics g) {
 		if (robotData == null || robotData.isEmpty()) {
 			return;
@@ -73,16 +94,14 @@ public class RobotCanvas extends JPanel {
 		
 		int idx = 0;
 		float lastX = 0, lastY = 0;
-		float curX = 100 + (newestRobotData.getPose().getX() * 2);
-		float curY = 100 + (newestRobotData.getPose().getY() * 2);
+		float curX = convCoord(newestRobotData.getPose().getX());
+		float curY = convCoord(newestRobotData.getPose().getY());
 		float curHeading = newestRobotData.getPose().getHeading() + 180;
 
 		g.setColor(Color.blue);
 		for (RobotData data : robotData) {
-			// this needs to get relative to the grid!
-			float x = 100 + (data.getPose().getX() * 2);
-			float y = 100 + (data.getPose().getY() * 2);
-			float heading = data.getPose().getHeading();
+			float x = convCoord(data.getPose().getX());
+			float y = convCoord(data.getPose().getY());
 			if (idx++ > 0) {
 				g.drawLine((int) lastX, (int) lastY, (int) x, (int) y);
 			}
@@ -98,15 +117,15 @@ public class RobotCanvas extends JPanel {
 			if (r.getRange() == -1) continue;
 			System.out.println(r.getRange());
 			float rAngle = r.getAngle();
-			int endX = (int) (curX + Math.cos(Math.toRadians(curHeading + rAngle)) * r.getRange() * 2);
-			int endY = (int) (curY + Math.sin(Math.toRadians(curHeading + rAngle)) * r.getRange() * 2);
+			int endX = convCoord((float) (curX + Math.cos(Math.toRadians(curHeading + rAngle)) * r.getRange()));
+			int endY = convCoord((float) (curY + Math.sin(Math.toRadians(curHeading + rAngle)) * r.getRange()));;
 			g.drawLine((int) curX, (int) curY, endX, endY);
 		}
 		
 		g.setColor(Color.yellow);
 		for (MCLParticle mp : newestRobotData.getParticles()) {
-			float pX = 100 + mp.getPose().getX() * 2;
-			float pY = 100 + mp.getPose().getY() * 2;
+			float pX = convCoord(mp.getPose().getX());
+			float pY = convCoord(mp.getPose().getY());
 			g.drawLine((int) pX, (int) pY, (int) pX, (int) pY);
 		}
 		
@@ -136,10 +155,6 @@ public class RobotCanvas extends JPanel {
 	public void setImage(BufferedImage image) {
 		this.image = image;
 	}
-	
-//	public Graphics2D getGraphics() {
-//		return graphics;
-//	}
 
 	public void setMap(RobotMap map) {
 		this.map = map;

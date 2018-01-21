@@ -21,13 +21,17 @@ import javax.swing.JPanel;
 import javax.swing.JTextField;
 import javax.swing.SwingUtilities;
 
-import lejos.robotics.RangeReading;
-import lejos.robotics.localization.MCLParticle;
-
 import org.mipyykko.roboexplorerpc.logic.Logic;
 import org.mipyykko.roboexplorerpc.model.RobotData;
 import org.mipyykko.roboexplorerpc.model.RobotMap;
 
+/**
+ * Graafinen käyttöliittymä.
+ * On saanut suuria vaikutteita esimerkkiprojekteista.
+ * 
+ * @author mipyykko
+ *
+ */
 public class GUI extends JPanel implements ActionListener {
 	
 	private static final long serialVersionUID = 2L;
@@ -46,12 +50,9 @@ public class GUI extends JPanel implements ActionListener {
 	int width = 800;
 	
 	private RobotCanvas canvas;
-	private BufferedImage canvasImage;
-	private Graphics2D canvasGraphics;
 
 	private RobotMap map;
 	
-	private float lastX = -1, lastY = -1;
 	private RobotData newestRobotData;
 	private List<RobotData> robotData = new ArrayList<RobotData>();
 	
@@ -99,7 +100,6 @@ public class GUI extends JPanel implements ActionListener {
 		canvas = new RobotCanvas(width, height, map);
 		frame.add(canvas, BorderLayout.CENTER);
 		canvas.createImage();
-		canvasImage = canvas.getImage();
 		canvas.setBackground(Color.white);
 		canvas.setRobotData(robotData);
 //		canvasGraphics = canvas.getGraphics();
@@ -109,7 +109,6 @@ public class GUI extends JPanel implements ActionListener {
 		frame.pack();
 		
 		repaint();
-//		frame.add(this);
 	}
 
 	public void updateConnectStatus() {
@@ -160,6 +159,9 @@ public class GUI extends JPanel implements ActionListener {
 		repaint();
 	}
 	
+	/**
+	 * Päivitetään kartta.
+	 */
 	private void updateCanvas() {
 		System.out.println("updateCanvas");
 		if (newestRobotData != null) {
@@ -170,11 +172,8 @@ public class GUI extends JPanel implements ActionListener {
 			headingTextField.setText("" + (int) curHeading);
 			xTextField.setText("" + (int) curX);
 			yTextField.setText("" + (int) curY);
-//			if (canvasGraphics == null) {
-				canvas.createImage();
-				canvas.setBackground(Color.white);
-//				canvasGraphics = canvas.getGraphics();
-//			}
+			canvas.createImage();
+			canvas.setBackground(Color.white);
 		}
 		canvas.repaint();
 		frame.repaint();
@@ -183,7 +182,7 @@ public class GUI extends JPanel implements ActionListener {
 
 	public void update(RobotData data) {
 		System.out.println("received update");
-		newestRobotData = data;//(RobotData) o;
+		newestRobotData = data;
 		robotData.add(newestRobotData);
 		updateCanvas();
 	}
