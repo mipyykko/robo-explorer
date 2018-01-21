@@ -101,7 +101,8 @@ public class GUI extends JPanel implements ActionListener {
 		canvas.createImage();
 		canvasImage = canvas.getImage();
 		canvas.setBackground(Color.white);
-		canvasGraphics = canvas.getGraphics();
+		canvas.setRobotData(robotData);
+//		canvasGraphics = canvas.getGraphics();
 
 		frame.add(mainPanel, BorderLayout.NORTH);
 		frame.add(leftPanel, BorderLayout.WEST);
@@ -112,9 +113,9 @@ public class GUI extends JPanel implements ActionListener {
 	}
 
 	public void updateConnectStatus() {
-		connectButton.setText(logic.connected() ? "Disconnect" : "Connect to NXT");
-		connectStatusText.setText(logic.connected() ? "connected" : "not connected");
-		switch (logic.getStatus()) {
+		connectButton.setText(logic.getConnection().connected() ? "Disconnect" : "Connect to NXT");
+		connectStatusText.setText(logic.getConnection().connected() ? "connected" : "not connected");
+		switch (logic.getConnection().getStatus()) {
 			case OK:
 				connectStatusText.setText("connected");
 				break;
@@ -133,11 +134,11 @@ public class GUI extends JPanel implements ActionListener {
 	public void actionPerformed(ActionEvent ae) {
 		repaint();
 		if (ae.getSource() == connectButton) {
-			if (!logic.connected()) {
+			if (!logic.getConnection().connected()) {
 				connectStatusText.setText("connecting...");
 				Thread t = new Thread(new Runnable() {
 					public void run() {
-						logic.connect();
+						logic.getConnection().connect();
 						SwingUtilities.invokeLater(new Runnable() {
 							public void run() {
 								updateConnectStatus();
@@ -149,7 +150,7 @@ public class GUI extends JPanel implements ActionListener {
 			} else {
 				connectStatusText.setText("disconnecting...");
 				synchronized(this) {
-					logic.disconnect();
+					logic.getConnection().disconnect();
 				}
 			}
 			System.out.println("connect clicked and logic run");
@@ -163,20 +164,19 @@ public class GUI extends JPanel implements ActionListener {
 		System.out.println("updateCanvas");
 		if (newestRobotData != null) {
 			headingHistoryModel.addElement(newestRobotData.getPose().getHeading());
-			float curX = 100 + (newestRobotData.getPose().getX() * 2);
-			float curY = 100 + (newestRobotData.getPose().getY() * 2);
+			float curX = newestRobotData.getPose().getX();
+			float curY = newestRobotData.getPose().getY();
 			float curHeading = newestRobotData.getPose().getHeading() + 180;
 			headingTextField.setText("" + (int) curHeading);
 			xTextField.setText("" + (int) curX);
 			yTextField.setText("" + (int) curY);
-			if (canvasGraphics == null) {
+//			if (canvasGraphics == null) {
 				canvas.createImage();
 				canvas.setBackground(Color.white);
-				canvasGraphics = canvas.getGraphics();
-			}
-			canvas.drawGrid();
-			canvas.drawPath(robotData);
+//				canvasGraphics = canvas.getGraphics();
+//			}
 		}
+		canvas.repaint();
 		frame.repaint();
 		repaint();
 	}

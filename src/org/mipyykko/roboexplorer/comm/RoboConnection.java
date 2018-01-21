@@ -74,6 +74,11 @@ public class RoboConnection {
 					distance = dis.readFloat();
 					explorer.rotateTravel(angle, distance);
 					break;
+				case BACK:
+					dis.readInt();
+					distance = dis.readFloat();
+					explorer.back(distance);
+					break;
 				case STOP:
 					dis.readInt();
 					explorer.stop();
@@ -86,13 +91,16 @@ public class RoboConnection {
 	}
 	
 	public boolean sendData(Command command, Object... values) /*MCLPoseProvider poseProvider, RangeReadings rangeReadings)*/ {
+		MCLPoseProvider poseProvider;
+		Pose pose;
+		
 		try {
 			switch (command) {
 				case SEND_DATA:
-					MCLPoseProvider poseProvider = (MCLPoseProvider) values[0];
+					poseProvider = (MCLPoseProvider) values[0];
 					RangeReadings rangeReadings = (RangeReadings) values[1];
 					dos.writeInt(command.ordinal());
-					Pose pose = poseProvider.getEstimatedPose();
+					pose = poseProvider.getEstimatedPose();
 					dos.writeFloat(pose.getX());
 					dos.writeFloat(pose.getY());
 					dos.writeFloat(pose.getHeading());
@@ -120,6 +128,19 @@ public class RoboConnection {
 				case STOP_OBSTACLE:
 					dos.writeInt(command.ordinal());
 					dos.writeFloat((Float) values[0]);
+					dos.flush();
+					break;
+				case STOP_BUMP:
+					dos.writeInt(command.ordinal());
+					poseProvider = (MCLPoseProvider) values[0];
+					pose = poseProvider.getEstimatedPose();
+					dos.writeFloat(pose.getX());
+					dos.writeFloat(pose.getY());
+					dos.writeFloat(pose.getHeading());
+					dos.flush();
+				case STOP_STALLED:
+					dos.writeInt(command.ordinal());
+					dos.flush();
 					break;
 					
 			}

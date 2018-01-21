@@ -30,6 +30,10 @@ public class Config {
 	final String ULTRASONIC_MOTOR_DEFAULT_PORT = "C";
 	final String ULTRASONIC_SENSOR_DEFAULT_PORT = "S4";
 	
+	final String TOUCH_SENSOR_DEFAULT_PORT = "S3";
+	
+	final String LIGHT_SENSOR_DEFAULT_PORT = "S2";
+	
 	final String WHEEL_DEFAULT_DIAMETER = "2.24";
 	final String TRACK_DEFAULT_WIDTH = new Double(12 / 2.54).toString();
 	
@@ -44,6 +48,8 @@ public class Config {
 			put("rightMotorPort", RIGHT_MOTOR_DEFAULT_PORT);
 			put("ultrasonicMotorPort", ULTRASONIC_MOTOR_DEFAULT_PORT);
 			put("ultrasonicSensorPort", ULTRASONIC_SENSOR_DEFAULT_PORT);
+			put("touchSensorPort", TOUCH_SENSOR_DEFAULT_PORT);
+			put("lightSensorPort", LIGHT_SENSOR_DEFAULT_PORT);
 			put("wheelDiameter", WHEEL_DEFAULT_DIAMETER);
 			put("trackWidth", TRACK_DEFAULT_WIDTH);
 			put("travelSpeed", TRAVEL_DEFAULT_SPEED);

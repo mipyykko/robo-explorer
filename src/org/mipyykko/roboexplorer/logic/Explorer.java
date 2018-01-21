@@ -4,7 +4,9 @@ import lejos.geom.Line;
 import lejos.geom.Rectangle;
 import lejos.nxt.Button;
 import lejos.nxt.LCD;
+import lejos.nxt.LightSensor;
 import lejos.nxt.NXTRegulatedMotor;
+import lejos.nxt.TouchSensor;
 import lejos.nxt.UltrasonicSensor;
 import lejos.nxt.comm.RConsole;
 import lejos.robotics.RangeReading;
@@ -17,6 +19,12 @@ import lejos.robotics.mapping.LineMap;
 import lejos.robotics.mapping.RangeMap;
 import lejos.robotics.navigation.DifferentialPilot;
 import lejos.robotics.navigation.Pose;
+import lejos.robotics.objectdetection.Feature;
+import lejos.robotics.objectdetection.FeatureDetector;
+import lejos.robotics.objectdetection.FeatureListener;
+import lejos.robotics.objectdetection.FusorDetector;
+import lejos.robotics.objectdetection.RangeFeatureDetector;
+import lejos.robotics.objectdetection.TouchFeatureDetector;
 
 import org.mipyykko.roboexplorer.comm.Command;
 import org.mipyykko.roboexplorer.comm.RoboConnection;
@@ -29,17 +37,19 @@ import org.mipyykko.roboexplorer.ui.Menu;
  * @author mipyykko
  *
  */
-public class Explorer {
+public class Explorer implements FeatureListener {
 
 	private Config config;
 	private Menu menu;
 	
 	private NXTRegulatedMotor leftMotor, rightMotor, ultrasonicMotor;
 	private UltrasonicSensor ultrasonicSensor;
-
+	private TouchSensor touchSensor;
+	private LightSensor lightSensor;
+	
 	private DifferentialPilot pilot;
 	private RangeScanner scanner;
-	
+
 	int x, y;
 	double travelSpeed, rotateSpeed, travelDistance, distanceThreshold;
 	final int xsize = 40;
@@ -111,6 +121,8 @@ public class Explorer {
 		this.rightMotor = new NXTRegulatedMotor(config.getMotorPort("rightMotorPort"));
 		this.ultrasonicMotor = new NXTRegulatedMotor(config.getMotorPort("ultrasonicMotorPort"));
 		this.ultrasonicSensor = new UltrasonicSensor(config.getSensorPort("ultrasonicSensorPort"));
+		this.touchSensor = new TouchSensor(config.getSensorPort("touchSensorPort"));
+		this.lightSensor = new LightSensor(config.getSensorPort("lightSensorPort"));
 		this.travelSpeed = config.getDouble("travelSpeed");
 		this.rotateSpeed = config.getDouble("rotateSpeed");
 		this.travelDistance = config.getDouble("travelDistance");
@@ -118,9 +130,18 @@ public class Explorer {
 
 		pilot = new DifferentialPilot(config.getDouble("wheelDiameter"), config.getDouble("trackWidth"), leftMotor, rightMotor, false);
 		scanner = new RotatingRangeScanner(ultrasonicMotor, ultrasonicSensor);
+		
 		float[] angles = new float[]{90, 45, 0, -45, -90};
 		scanner.setAngles(angles);
-	
+
+//		FeatureDetector ultraDetector = new RangeFeatureDetector(scanner.getRangeFinder(), 10, 500);
+//		FeatureDetector bumperDetector = new TouchFeatureDetector(touchSensor);
+//		
+//		FusorDetector detector = new FusorDetector();
+//		detector.addDetector(ultraDetector);
+//		detector.addDetector(bumperDetector);
+//		detector.addListener(this);
+		
 		map = new LineMap(new Line[]{
 				new Line(0,0, xsize,0), 
 				new Line(xsize, 0, xsize, ysize), 
@@ -182,7 +203,7 @@ public class Explorer {
 		scan();
 		
 		while (!Button.ESCAPE.isPressed()) {
-			System.out.println("in the loop");
+			// System.out.println("in the loop");
 			
 //			if (maxReading == null || maxReading.getRange() == -1) {
 //				pilot.rotate(-180 + (float) Math.random() * 360);
@@ -286,7 +307,7 @@ public class Explorer {
 	}
 
 	public void scanAhead() {
-		while (pilot.isMoving() && !pilot.isStalled()) {
+		while (pilot.isMoving() && !pilot.isStalled() && !touchSensor.isPressed()) {
 			float fwd = scanner.getRangeFinder().getRange();
 			if (fwd < 10) {
 				System.out.println("about to hit something!");
@@ -294,12 +315,26 @@ public class Explorer {
 				connection.sendData(Command.STOP_OBSTACLE, fwd);
 				break;
 			}
+			if (touchSensor.isPressed()) {
+				break;
+			}
 		}
 
+		if (touchSensor.isPressed()) {
+			pilot.stop();
+			poseProvider.estimatePose();
+			
+			while(poseProvider.isBusy()) {}
+			
+			connection.sendData(Command.STOP_BUMP, poseProvider);
+			return;
+		}
+		
 		if (pilot.isStalled()) {
+			connection.sendData(Command.STOP_STALLED, 0);
 			pilot.travel(-scanner.getRangeFinder().getRange());
 			while (pilot.isMoving()) {};
-		}
+		}		
 	}
 
 	public void rotate(float angle) {
@@ -322,77 +357,40 @@ public class Explorer {
 	public void rotateTravel(float angle, float distance) {
 		moveFinished = false;
 		
-		pilot.rotate(angle);
+		if (angle <= -0.01f || angle >= 0.01f) pilot.rotate(angle);
 		pilot.travel(distance, true);
 		scanAhead();
 		moveFinished = true;
 	}
 
-	
+	public void back(float distance) {
+		moveFinished = false;
+		
+		pilot.travel(-distance, false);
+		
+		moveFinished = true;
+	}
 	public void stop() {
 		pilot.stop();
 	}
-	
-	// TODO: horrible!
-//	class Pair {
-//		int x, y;
-//		
-//		Pair(int x, int y) {
-//			this.x = x;
-//			this.y = y;
-//		}
-//	}
-//	
-//	private Pair[] getRelatives() {
-//		Pair relativeLeft = new Pair(0, 1);
-//		Pair relativeRight = new Pair(0, -1);
-//		Pair relativeForward = new Pair(1, 0);
-//		
-//		if (heading >= 0 && heading < 10 || heading < -170) {
-//			// default
-//		}
-//		if (heading >= 80 && heading < 100) {
-//			relativeLeft = new Pair(1, 0);
-//			relativeRight = new Pair(-1, 0);
-//			relativeForward = new Pair(0, -1);
-//		}
-//		if (heading > 170 || (heading > -10 && heading < 0)) {
-//			relativeLeft = new Pair(0, -1);
-//			relativeRight = new Pair(0, 1);
-//			relativeForward = new Pair(-1, 0);
-//		}
-//		if (heading <= -10 && heading > -30) {
-//			relativeLeft = new Pair(-1, 0);
-//			relativeRight = new Pair(1, 0);
-//			relativeForward = new Pair(0, 1);
-//		}
-//		return new Pair[]{relativeLeft, relativeRight, relativeForward};
-//	}
-//	
-//	private void setData(double left, double right, double forward) throws Exception {
-//		Pair[] relatives = getRelatives();
-//		Pair relativeLeft = relatives[0];
-//		Pair relativeRight = relatives[1];
-//		Pair relativeForward = relatives[2];
-//		
-//		map.incCount(x + relativeLeft.x, y + relativeLeft.y);
-//		map.incCount(x + relativeForward.x, y + relativeForward.y);
-//		map.incCount(x + relativeRight.x, y + relativeRight.y);
-//		
-//		if (left >= 0 && left <= distanceThreshold) {
-//			map.incMap(x + relativeLeft.x, y + relativeLeft.y);
-//		} else {
-//			map.decMap(x + relativeLeft.x, y + relativeLeft.y);
-//		}
-//		if (forward >= 0 && forward <= distanceThreshold) {
-//			map.incMap(x + relativeForward.x, y + relativeForward.y);
-//		} else {
-//			map.decMap(x + relativeForward.x, y + relativeForward.y);
-//		}
-//		if (right >= 0 && right <= distanceThreshold) {
-//			map.incMap(x + relativeRight.x, y + relativeRight.y);
-//		} else {
-//			map.decMap(x + relativeRight.x, y + relativeRight.y);
-//		}
-//	}
+
+	@Override
+	public void featureDetected(Feature feature, FeatureDetector detector) {
+		if (!pilot.isMoving()) {
+			return;
+		}
+		
+		detector.enableDetection(false);
+
+		pilot.stop();
+
+		RangeReadings rrs = feature.getRangeReadings();
+		System.out.print("detected something at ");
+		for (RangeReading rr : rrs) {
+			System.out.print(rr.getAngle() + ": " + rr.getRange() + ", ");
+		}
+		System.out.println();
+		Button.waitForAnyPress();
+		detector.enableDetection(true);
+	}
 }
