@@ -8,3 +8,4 @@
 [Viikkoraportti 5](documentation/viikko5.md)  
 [Toteutusdokumentti](documentation/toteutus.md)  
 [Testausdokumentti](documentation/testaus.md)  
+[Käyttöohje](documentation/kaytto.md)
