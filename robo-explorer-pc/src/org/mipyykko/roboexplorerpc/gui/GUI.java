@@ -168,7 +168,7 @@ public class GUI extends JPanel implements ActionListener {
 			headingHistoryModel.addElement(newestRobotData.getPose().getHeading());
 			float curX = newestRobotData.getPose().getX();
 			float curY = newestRobotData.getPose().getY();
-			float curHeading = newestRobotData.getPose().getHeading() + 180;
+			float curHeading = newestRobotData.getPose().getHeading();
 			headingTextField.setText("" + (int) curHeading);
 			xTextField.setText("" + (int) curX);
 			yTextField.setText("" + (int) curY);
@@ -184,6 +184,7 @@ public class GUI extends JPanel implements ActionListener {
 		System.out.println("received update");
 		newestRobotData = data;
 		robotData.add(newestRobotData);
+		updateConnectStatus();
 		updateCanvas();
 	}
 	

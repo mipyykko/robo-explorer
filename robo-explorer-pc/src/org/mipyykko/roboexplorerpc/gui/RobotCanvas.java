@@ -29,7 +29,7 @@ public class RobotCanvas extends JPanel {
 	private List<RobotData> robotData;
 	
 	private int gridSpace = 10;
-	private int cellSize = 2;
+	private int cellSize = 10;
 	
 	private RobotMap map;
 	
@@ -47,6 +47,7 @@ public class RobotCanvas extends JPanel {
 			this.image = new BufferedImage(width, height, BufferedImage.TYPE_BYTE_INDEXED);
 		}
 		drawGrid(image.getGraphics());
+		drawPath(image.getGraphics());
 	}
 	
 	public void drawGrid(Graphics g) {
@@ -96,13 +97,14 @@ public class RobotCanvas extends JPanel {
 		float lastX = 0, lastY = 0;
 		float curX = convCoord(newestRobotData.getPose().getX());
 		float curY = convCoord(newestRobotData.getPose().getY());
-		float curHeading = newestRobotData.getPose().getHeading() + 180;
+		float curHeading = newestRobotData.getPose().getHeading();
 
 		g.setColor(Color.blue);
 		for (RobotData data : robotData) {
 			float x = convCoord(data.getPose().getX());
 			float y = convCoord(data.getPose().getY());
 			if (idx++ > 0) {
+				System.out.format("supposed to draw line %f %f - %f %f\n", lastX, lastY, x, y);
 				g.drawLine((int) lastX, (int) lastY, (int) x, (int) y);
 			}
 			lastX = x;
@@ -110,16 +112,17 @@ public class RobotCanvas extends JPanel {
 		}
 
 		g.setColor(Color.pink);
-		g.drawOval((int) curX, (int) curY, 4, 4);
+		System.out.format("supposed to draw oval %f %f\n", curX, curY);
+		g.drawOval((int) curX, (int) curY, gridSpace - 2, gridSpace - 2);
 		
 		g.setColor(Color.red);
 		for (RangeReading r : newestRobotData.getReadings()) {
 			if (r.getRange() == -1) continue;
-			System.out.println(r.getRange());
 			float rAngle = r.getAngle();
-			int endX = convCoord((float) (curX + Math.cos(Math.toRadians(curHeading + rAngle)) * r.getRange()));
-			int endY = convCoord((float) (curY + Math.sin(Math.toRadians(curHeading + rAngle)) * r.getRange()));;
-			g.drawLine((int) curX, (int) curY, endX, endY);
+			float endX = curX + convCoord((float) (Math.cos(Math.toRadians(curHeading + rAngle)) * r.getRange()));
+			float endY = curY + convCoord((float) (Math.sin(Math.toRadians(curHeading + rAngle)) * r.getRange()));;
+			System.out.format("supposed to draw reading %f %f %f %f\n", curX, curY, endX, endY);
+			g.drawLine((int) curX, (int) curY, (int) endX, (int) endY);
 		}
 		
 		g.setColor(Color.yellow);
@@ -144,7 +147,7 @@ public class RobotCanvas extends JPanel {
 			createImage();
 		}
 		drawGrid(g);
-		//drawPath(g);
+		drawPath(g);
 		g.drawImage(image, 0, 0, this);
 	}
 	

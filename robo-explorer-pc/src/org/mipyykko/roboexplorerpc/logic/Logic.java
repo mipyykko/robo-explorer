@@ -31,7 +31,7 @@ public class Logic {
 	private GUI gui;
 	
 	private int width = 100, height = 100;
-	private int cellSize = 2;
+	private int cellSize = 10;
 
 	public Logic(GUI gui) {
 		this.connection = new RoboConnection();
@@ -45,8 +45,8 @@ public class Logic {
 		this.gui = gui;
 	}
 	
-	public int scaleCoord(int coord) {
-		return coord / cellSize + 20;
+	public int scaleCoord(double coord) {
+		return (int) (coord / cellSize + 20);
 	}
 	
 	/** 
@@ -59,15 +59,24 @@ public class Logic {
 		RangeReadings rangeReadings = robotData.getReadings();
 		Pose currentPose = robotData.getPose();
 		
+		int curX = scaleCoord((int) currentPose.getX());
+		int curY = scaleCoord((int) currentPose.getY());
+		float curHeading = currentPose.getHeading();
+
+		if (robotData.getBumped()) {
+			// no range readings when bumped, mark straight ahead
+			int readingX = scaleCoord(curX + Math.sin((float) Math.toRadians(curHeading)) * 10);
+			int readingY = scaleCoord(curY + Math.cos((float) Math.toRadians(curHeading)) * 10);
+			map.setOccupied(readingX, readingY);
+			return true;
+		}
+
 		System.out.println("updating map...");
 		
 		for (RangeReading rr : rangeReadings) {
-			System.out.format("%f: %f\n", rr.getAngle(), rr.getRange());
+			
 			if (rr.getRange() == -1) continue;
-			int curX = scaleCoord((int) currentPose.getX());
-			int curY = scaleCoord((int) currentPose.getY());
-
-			float curHeading = currentPose.getHeading() + 180;
+			
 			float startAngle = (float) Math.toRadians(curHeading + rr.getAngle() - 10);
 			float endAngle = (float) Math.toRadians(curHeading + rr.getAngle() + 10);
 			float theta = startAngle;
@@ -78,13 +87,10 @@ public class Logic {
 			 * 20 asteen mittaiselle ympyrän kaarelle. 
 			 */
 			while (theta <= endAngle) {
-				System.out.format("theta %f\n", theta);
-				int readingX = scaleCoord((int) (curX + (rr.getRange() / cellSize) * Math.sin(theta)));
-				int readingY = scaleCoord((int) (curY + (rr.getRange() / cellSize) * Math.cos(theta)));
+				int readingX = scaleCoord(curX + rr.getRange() * Math.sin(theta));
+				int readingY = scaleCoord(curY + rr.getRange() * Math.cos(theta));
 
 				theta += 0.05f;
-				
-				System.out.format("current %d %d, reading %d %d\n", curX, curY, readingX, readingY);
 				
 				// Bresenham's line algorithm implementation source:
 				// https://stackoverflow.com/questions/11678693/all-cases-covered-bresenhams-line-algorithm
@@ -140,17 +146,24 @@ public class Logic {
 	 * Päätetään robotin seuraava siirto.
 	 */
 	public boolean decideMove(RobotData robotData) {
-		if (robotData == null) return false;
+		if (robotData == null) {
+			System.out.println("null robotData @ decideMove!");
+			return false;
+		}
 
+		if (robotData.getBumped()) {
+			return connection.sendData(Command.BACK, 5);
+		}
+		
 		Pose pose = robotData.getPose();
 		int curX = scaleCoord((int) pose.getX());
 		int curY = scaleCoord((int) pose.getY());
-		float curHeading = pose.getHeading() + 180;
+		float curHeading = pose.getHeading();
 		
 		RangeReadings rangeReadings = robotData.getReadings();
 		
 		if (rangeReadings == null) {
-			return connection.sendData(Command.BACK, 10);
+			return connection.sendData(Command.BACK, 5);
 		}
 		float angles[] = new float[]{0, -90, 90};
 		
@@ -163,6 +176,9 @@ public class Logic {
 			if (reading != -1) {
 				int futureX = scaleCoord((int) (curX + Math.cos(Math.toRadians(curHeading + angle)) * cellSize));
 				int futureY = scaleCoord((int) (curY + Math.sin(Math.toRadians(curHeading + angle)) * cellSize));
+				if (angle == 0 && reading <= 10) {
+					return connection.sendData(Command.BACK, 5);
+				}
 				if (map.isFree(futureX, futureY) && reading > 10) {
 					return connection.sendData(Command.ROTATE_MOVE, angle, 10);
 				}
@@ -174,13 +190,18 @@ public class Logic {
 		for (int i = 0; i < rangeReadings.getNumReadings(); i++) {
 			RangeReading r = rangeReadings.get(i);
 			System.out.print(r.getAngle() + ": " + r.getRange() + " ");
-			if (maxReading == null || (maxReading != null && r.getRange() > maxReading.getRange())) {
+			int futureX = scaleCoord((int) (curX + Math.cos(Math.toRadians(curHeading + r.getAngle())) * (r.getRange() / cellSize)));
+			int futureY = scaleCoord((int) (curY + Math.sin(Math.toRadians(curHeading + r.getAngle())) * (r.getRange() / cellSize)));
+			
+			if (maxReading == null || (maxReading != null && 
+					r.getRange() > maxReading.getRange() &&
+					map.isFree(futureX, futureY))) {
 				maxReading = r;
 			}
 		}
 		
 		if (maxReading == null || maxReading.getRange() == -1) {
-			return connection.sendData(Command.BACK, 10);
+			return connection.sendData(Command.BACK, 5);
 		}
 		
 		float toRotate = maxReading.getAngle();

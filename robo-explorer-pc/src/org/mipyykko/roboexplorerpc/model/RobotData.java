@@ -11,6 +11,7 @@ public class RobotData {
 	private Pose pose;
 	private RangeReadings readings;
 	private List<MCLParticle> particles;
+	private boolean bumped;
 	
 	public RobotData() {}
 	
@@ -26,6 +27,11 @@ public class RobotData {
 	
 	public RobotData particles(List<MCLParticle> particles) {
 		this.particles = particles;
+		return this;
+	}
+	
+	public RobotData bumped() {
+		this.bumped = true;
 		return this;
 	}
 	
@@ -45,4 +51,7 @@ public class RobotData {
 		return particles;
 	}
 	
+	public boolean getBumped() {
+		return bumped;
+	}
 }

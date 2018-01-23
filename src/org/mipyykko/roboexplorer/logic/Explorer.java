@@ -195,7 +195,9 @@ public class Explorer {
 			
 			try {
 				Thread.sleep(1000);
-			} catch (Exception e) {}
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
 			
 		}
 		if (DEBUG) {
@@ -211,6 +213,8 @@ public class Explorer {
 	 * tietokoneelle.
 	 */
 	public void scanAhead() {
+		System.out.println("scan ahead");
+		
 		while (pilot.isMoving() && !pilot.isStalled() && !touchSensor.isPressed()) {
 			float fwd = scanner.getRangeFinder().getRange();
 			if (fwd < distanceThreshold) {
@@ -273,13 +277,16 @@ public class Explorer {
 	public void back(float distance) {
 		moveFinished = false;
 		
-		pilot.travel(-distance, false);
+		pilot.travel(-distance, true);
+		
+		while (pilot.isMoving()) {}
 		
 		moveFinished = true;
 	}
 	
 	public void stop() {
 		pilot.stop();
+		moveFinished = true;
 	}
 
 }

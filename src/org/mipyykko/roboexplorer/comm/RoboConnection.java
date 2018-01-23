@@ -150,6 +150,7 @@ public class RoboConnection {
 					dos.writeFloat(pose.getX());
 					dos.writeFloat(pose.getY());
 					dos.writeFloat(pose.getHeading());
+					break;
 				case STOP_STALLED:
 					dos.writeInt(command.ordinal());
 					break;

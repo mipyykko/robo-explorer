@@ -105,9 +105,10 @@ public class RoboConnection {
 		return true;
 	}
 
-	public RobotData receiveBumpData() {
+	public RobotData receiveBumpOrObstacleData() {
 		boolean ok = false;
 		Pose pose;
+		float distance;
 		
 		try {
 			while (isUpdating || isSending) {
@@ -116,7 +117,6 @@ public class RoboConnection {
 			}
 			isUpdating = true;
 			pose = new Pose(dis.readFloat(), dis.readFloat(), dis.readFloat());
-//			map.setOccupied(scaleCoord((int) pose.getX()), scaleCoord((int) pose.getY()));
 			ok = true;
 		} catch (Exception e) {
 			return null;
@@ -125,6 +125,7 @@ public class RoboConnection {
 		if (ok) {
 			RobotData robotData = new RobotData()
 				.pose(pose)
+				.bumped()
 				.build();
 			isUpdating = false;
 			ok = false;
@@ -175,7 +176,6 @@ public class RoboConnection {
 				.readings(curReadings)
 				.particles(curParticles)
 				.build();
-
 			isUpdating = false;
 			ok = false;
 			return robotData;
@@ -225,7 +225,11 @@ public class RoboConnection {
 				if (!isUpdating && !isSending) {
 					try {
 						code = dis.readInt();
+						if (code < 0 || code > Command.values().length) {
+							throw new Exception("erroneous code: " + code);
+						}
 						Command command = Command.values()[code];
+						System.out.println("Received command " + command.toString());
 						switch (command) {
 							case SEND_DATA:
 								robotData = receiveScanData();
@@ -234,13 +238,15 @@ public class RoboConnection {
 								logic.updateGUI(robotData);
 								break;
 							case STOP_OBSTACLE:
-								System.out.println("obstacle at " + dis.readFloat());
+								dis.readFloat(); // aargh
 								break;
 							case STOP_BUMP:
-								robotData = receiveBumpData();
+								robotData = receiveBumpOrObstacleData();
 								logic.decideMove(robotData);
 								logic.updateMap(robotData);
-								System.out.println("bumped");
+								System.out.println(robotData != null ? 
+										(robotData.getBumped() ? "bumped" : "obstacle") 
+										: "null?");
 								break;
 							case STOP_STALLED:
 								System.out.println("stalled");
