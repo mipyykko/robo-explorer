@@ -31,7 +31,7 @@ public class Logic {
 	private GUI gui;
 	
 	private int width = 100, height = 100;
-	private int cellSize = 10;
+	private int cellSize = 5;
 
 	public Logic(GUI gui) {
 		this.connection = new RoboConnection();
@@ -49,6 +49,13 @@ public class Logic {
 		return (int) (coord / cellSize + 20);
 	}
 	
+	private float normalize(float angle) {
+		while (angle > 180) angle -= 360;
+		while (angle < -180) angle += 360;
+
+		return angle;
+	}
+
 	/** 
 	 * Päivitetään karttaa saadun sensoridatan perusteella.
 	 * 
@@ -77,8 +84,9 @@ public class Logic {
 			
 			if (rr.getRange() == -1) continue;
 			
-			float startAngle = (float) Math.toRadians(curHeading + rr.getAngle() - 10);
-			float endAngle = (float) Math.toRadians(curHeading + rr.getAngle() + 10);
+			float headingAngle = curHeading + rr.getAngle();
+			float startAngle = (float) Math.toRadians(normalize(headingAngle - 10));
+			float endAngle = (float) Math.toRadians(normalize(headingAngle + 10));
 			float theta = startAngle;
 			
 			HashSet<Point> updated = new HashSet<Point>();
@@ -165,25 +173,25 @@ public class Logic {
 		if (rangeReadings == null) {
 			return connection.sendData(Command.BACK, 5);
 		}
-		float angles[] = new float[]{0, -90, 90};
-		
-		/*
-		 * Tällä hetkellä oletusarvoisena on pyrkiä menemään eteenpäin, sitten
-		 * oikealle ja sitten vasemmalle. 
-		 */
-		for (float angle : angles) {
-			float reading = rangeReadings.getRange(angle);
-			if (reading != -1) {
-				int futureX = scaleCoord((int) (curX + Math.cos(Math.toRadians(curHeading + angle)) * cellSize));
-				int futureY = scaleCoord((int) (curY + Math.sin(Math.toRadians(curHeading + angle)) * cellSize));
-				if (angle == 0 && reading <= 10) {
-					return connection.sendData(Command.BACK, 5);
-				}
-				if (map.isFree(futureX, futureY) && reading > 10) {
-					return connection.sendData(Command.ROTATE_MOVE, angle, 10);
-				}
-			}
-		}
+//		float angles[] = new float[]{0, -90, 90};
+//		
+//		/*
+//		 * Tällä hetkellä oletusarvoisena on pyrkiä menemään eteenpäin, sitten
+//		 * oikealle ja sitten vasemmalle. 
+//		 */
+//		for (float angle : angles) {
+//			float reading = rangeReadings.getRange(angle);
+//			if (reading != -1) {
+//				int futureX = scaleCoord((int) (curX + Math.cos(Math.toRadians(curHeading + angle)) * cellSize));
+//				int futureY = scaleCoord((int) (curY + Math.sin(Math.toRadians(curHeading + angle)) * cellSize));
+////				if (angle == 0 && reading <= 10) {
+////					return connection.sendData(Command.BACK, 5);
+////				}
+//				if (map.isFree(futureX, futureY) && reading > 10) {
+//					return connection.sendData(Command.ROTATE_MOVE, angle, 10);
+//				}
+//			}
+//		}
 		
 		RangeReading maxReading = null;
 		

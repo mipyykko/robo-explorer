@@ -29,7 +29,7 @@ public class RobotCanvas extends JPanel {
 	private List<RobotData> robotData;
 	
 	private int gridSpace = 10;
-	private int cellSize = 10;
+	private int cellSize = 5;
 	
 	private RobotMap map;
 	
@@ -83,6 +83,12 @@ public class RobotCanvas extends JPanel {
 		return scaleCoord(coord) * gridSpace + (gridSpace / 2);
 	}
 
+	private float normalize(float angle) {
+		while (angle > 180) angle -= 360;
+		while (angle < -180) angle += 360;
+
+		return angle;
+	}
 	/**
 	 * Piirtää robotin reittiä, mittauksia ja MCL-algoritmin partikkeleita.
 	 */
@@ -118,9 +124,9 @@ public class RobotCanvas extends JPanel {
 		g.setColor(Color.red);
 		for (RangeReading r : newestRobotData.getReadings()) {
 			if (r.getRange() == -1) continue;
-			float rAngle = r.getAngle();
-			float endX = curX + convCoord((float) (Math.cos(Math.toRadians(curHeading + rAngle)) * r.getRange()));
-			float endY = curY + convCoord((float) (Math.sin(Math.toRadians(curHeading + rAngle)) * r.getRange()));;
+			float readingAngle = normalize(curHeading + r.getAngle() - 180);
+			float endX = curX + convCoord((float) (Math.cos(readingAngle) * r.getRange()));
+			float endY = curY + convCoord((float) (Math.sin(readingAngle) * r.getRange()));;
 			System.out.format("supposed to draw reading %f %f %f %f\n", curX, curY, endX, endY);
 			g.drawLine((int) curX, (int) curY, (int) endX, (int) endY);
 		}
